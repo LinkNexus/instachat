@@ -57,6 +57,21 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		fi
 	fi
 
+		#Install nodejs
+     curl -fsSL https://deb.nodesource.com/setup_lts.x | bash
+     apt-get install -y nodejs
+     npm install -g npm@11.4.2
+
+    if [ -f package.json ]; then
+        if [ "$NODE_ENV" = "production" ]; then
+         	npm install --omit=dev
+         	npm run build
+        else
+         	npm install
+		 	npm run dev &
+        fi
+    fi
+
 	setfacl -R -m u:www-data:rwX -m u:"$(whoami)":rwX var
 	setfacl -dR -m u:www-data:rwX -m u:"$(whoami)":rwX var
 

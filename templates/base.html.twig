@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}InstaChat{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        {% block stylesheets %}
+            {{ vite_entry_link_tags('app') }}
+        {% endblock %}
+
+        {% block javascripts %}
+            {{ vite_entry_script_tags('app', {
+                dependency: 'react'
+            }) }}
+        {% endblock %}
+    </head>
+    <body>
+        {% block body %}{% endblock %}
+    </body>
+</html>
