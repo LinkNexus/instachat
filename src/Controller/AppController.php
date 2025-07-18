@@ -8,11 +8,9 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AppController extends AbstractController
 {
-    #[Route('/app', name: 'app_app')]
+    #[Route('/{url}', name: 'index', requirements: ["url" => "^((?!api).)*$"])]
     public function index(): Response
     {
-        return $this->render('app/index.html.twig', [
-            'controller_name' => 'AppController',
-        ]);
+        return $this->render('app/index.html.twig');
     }
 }

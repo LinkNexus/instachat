@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	file \
 	gettext \
 	git \
+    supervisor \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
@@ -31,7 +32,13 @@ RUN set -eux; \
 		intl \
 		opcache \
 		zip \
+        xsl \
 	;
+
+# Installing Nodejs and NPM
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash
+RUN apt-get install -y nodejs
+RUN npm install -g npm@11.4.2
 
 # https://getcomposer.org/doc/03-cli.md#composer-allow-superuser
 ENV COMPOSER_ALLOW_SUPERUSER=1
@@ -42,11 +49,16 @@ ENV MERCURE_TRANSPORT_URL=bolt:///data/mercure.db
 ENV PHP_INI_SCAN_DIR=":$PHP_INI_DIR/app.conf.d"
 
 ###> recipes ###
+###> doctrine/doctrine-bundle ###
+RUN install-php-extensions pdo_pgsql
+###< doctrine/doctrine-bundle ###
 ###< recipes ###
 
 COPY --link frankenphp/conf.d/10-app.ini $PHP_INI_DIR/app.conf.d/
 COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
 COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+
+COPY --link messenger-worker.conf /etc/supervisor/conf.d/messenger-worker.conf
 
 ENTRYPOINT ["docker-entrypoint"]
 

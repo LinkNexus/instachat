@@ -2,4 +2,17 @@
 
 {% block body %}
     <div id="root"></div>
+
+    {{ dump(app.user) }}
+
+    {% if app.user is not null %}
+        <script>
+            window.user = {
+                id: {{ app.user.id }},
+                email: "{{ app.user.email|e('js') }}",
+                roles: {{ app.user.roles|json_encode|raw }},
+                name: "{{ app.user.name|e('js') }}"
+            }
+        </script>
+    {% endif %}
 {% endblock %}
