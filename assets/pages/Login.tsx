@@ -1,4 +1,3 @@
-import {Alert, AlertDescription} from "@/components/ui/alert";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
@@ -6,88 +5,40 @@ import {Input} from "@/components/ui/input";
 import {Separator} from "@/components/ui/separator";
 import {useApiFetch} from "@/lib/fetch";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {ArrowLeft, CheckCircle, Loader2, Mail, MessageSquare} from "lucide-react";
-import {useState} from "react";
+import {Loader2, Mail, MessageSquare} from "lucide-react";
 import {useForm} from "react-hook-form";
 import {toast} from "sonner";
 import {Link} from "wouter";
 import z from "zod";
+import {useAppStore} from "@/lib/store.ts";
 
 export function Login() {
-  const [emailSent, setEmailSent] = useState(false);
-  const [email, setEmail] = useState("");
-
-  console.log(window.user);
-
+  const setUser = useAppStore(state => state.setUser);
   const {
     loading: pending,
     callback: login
   } = useApiFetch("/api/auth/login", {
     method: "POST",
     onError: () => {
-      toast.error("Failed to send magic link. Please try again.", {
+      toast.error("Your credentials are invalid, try again.", {
         closeButton: true,
-        action: {
-          label: "Retry",
-          onClick: async () => await login({ email })
-        }
       });
     },
-    onSuccess: () => setEmailSent(true)
+    onSuccess: setUser
   });
 
   const loginSchema = z.object({
-    email: z.string().email("Invalid email address")
+    username: z.string().email("Invalid email address"),
+    password: z.string().nonempty("Password cannot be empty")
   });
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: ""
+      username: "",
+      password: ""
     }
   });
-
-  if (emailSent) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>
-              We've sent a magic link to <strong>{email}</strong>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <Mail className="h-4 w-4" />
-              <AlertDescription>
-                Click the link in your email to sign in. The link will expire in 10 minutes.
-              </AlertDescription>
-            </Alert>
-
-            <div className="text-center space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Didn't receive the email? Check your spam folder.
-              </p>
-
-              <div className="flex flex-col space-y-2">
-                <Button variant="outline" onClick={() => login({ email })} disabled={pending}>
-                  Send Another Link
-                </Button>
-                <Button onClick={() => setEmailSent(false)} variant="ghost" className="w-full">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Login
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col items-center justify-center p-4">
@@ -113,16 +64,13 @@ export function Login() {
           <CardContent>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(async (values) => {
-                setEmail(values.email);
-                await login(values);
-              })} className="space-y-4">
+              <form onSubmit={form.handleSubmit(login)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email address</FormLabel>
+                      <FormLabel>Email Address</FormLabel>
                       <FormControl>
                         <Input disabled={pending} placeholder="test@example.com" {...field} />
                       </FormControl>
@@ -130,6 +78,25 @@ export function Login() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          disabled={pending}
+                          placeholder="Enter your password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                  />
 
                 <Button
                   type="submit"

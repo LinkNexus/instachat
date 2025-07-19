@@ -14,18 +14,15 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
+            stateless: false
             lazy: true
             provider: app_user_provider
             
+            json_login:
+                check_path: api.auth.login
+            
             logout:
                 path: /api/auth/logout
-
-            login_link:
-                check_route: api.auth.login_check
-                check_post_only: true
-                signature_properties: [ 'id', 'email' ]
-                success_handler: App\Security\Authentication\LoginLink\AuthenticationSuccessHandler
-                failure_handler: App\Security\Authentication\LoginLink\AuthenticationFailureHandler
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall

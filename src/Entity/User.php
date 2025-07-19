@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -22,6 +23,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180)]
     #[Groups(["user:read"])]
+    #[Assert\Email(message: "The email {{ value }} is not a valid email address.")]
     private ?string $email = null;
 
     /**
@@ -34,11 +36,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var string The hashed password
      */
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column]
+    #[Assert\Sequentially([
+        new Assert\PasswordStrength,
+        new Assert\NotCompromisedPassword
+    ])]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(["user:read"])]
+    #[Assert\Sequentially([
+        new Assert\Length(min: 3, max: 255, minMessage: "The name must be at least {{ limit }} characters long", maxMessage: "The name must be at most {{ limit }} characters long"),
+        new Assert\Regex(pattern: "/^[a-zA-Z0-9_ ]+$/", message: "The name can only contain letters, numbers, spaces and underscores.")
+    ])]
     private ?string $name = null;
 
     #[ORM\Column]

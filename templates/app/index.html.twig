@@ -3,8 +3,6 @@
 {% block body %}
     <div id="root"></div>
 
-    {{ dump(app.user) }}
-
     {% if app.user is not null %}
         <script>
             window.user = {

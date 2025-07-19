@@ -31,6 +31,7 @@
         "symfony/security-bundle": "7.3.*",
         "symfony/serializer": "7.3.*",
         "symfony/twig-bundle": "7.3.*",
+        "symfony/validator": "7.3.*",
         "symfony/yaml": "7.3.*",
         "symfonycasts/verify-email-bundle": "*",
         "twig/cssinliner-extra": "^3.21",
@@ -89,6 +90,7 @@
         }
     },
     "require-dev": {
+        "doctrine/doctrine-fixtures-bundle": "^4.1",
         "symfony/maker-bundle": "^1.64"
     }
 }

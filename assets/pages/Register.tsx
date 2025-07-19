@@ -8,13 +8,14 @@ import {Loader2, MessageSquare, UserPlus} from "lucide-react";
 import {useForm} from "react-hook-form";
 import {Link} from "wouter";
 import z from "zod";
-import {useAppStore} from "@/lib/store.ts";
 import {useApiFetch} from "@/lib/fetch.ts";
 import type {User} from "@/types.ts";
+import type {FormErrors} from "@/lib/forms.ts";
+import {useAppStore} from "@/lib/store.ts";
+import {toast} from "sonner";
 
 export function Register() {
-  const setUser  = useAppStore(state => state.setUser);
-
+  const setUser = useAppStore(state => state.setUser);
   const registrationSchema = z.object({
     name: z.string()
       .min(3, "The name must be at least 3 characters long")
@@ -23,43 +24,40 @@ export function Register() {
         /^[a-zA-Z0-9_ ]+$/,
         "Name must only contain alphanumeric characters, spaces and underscores"
       ),
-    email: z.string().email("Invalid email address")
+    email: z.string().email({ error: (iss) => `The email ${iss.input} is not a valid email address.`}),
+    password: z.string()
   });
 
   const form = useForm<z.infer<typeof registrationSchema>>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       name: "",
-      email: ""
+      email: "",
+      password: ""
     }
   });
 
   const {
     loading,
     callback: register,
-  } = useApiFetch<User>("/api/auth/register", {
+  } = useApiFetch<User, FormErrors>("/api/auth/register", {
     method: "POST",
-    onSuccess: setUser
-  })
+    onError: (err) => {
+      err.data.violations.forEach(v => {
+        form.setError(v.propertyPath as keyof z.infer<typeof registrationSchema>, {
+          type: "manual",
+          message: v.title
+        });
+      })
+    },
+    onSuccess: (user) => {
+      toast.success("A verification email has been sent to your inbox. Please check your email to verify your account.", {
+        closeButton: true,
+      });
 
-  // const register = async (data: z.infer<typeof registrationSchema>) => {
-  //   setPending(true);
-  //
-  //   apiFetch<User>("/auth/register", {
-  //     method: "POST",
-  //     data
-  //   })
-  //     .then((res) => {
-  //       setUser(res);
-  //       toast.success("Your account was successfully created, check out the mail that was sent to you for email verification");
-  //     })
-  //     .catch((err) => {
-  //       if (err instanceof ApiError) {
-  //         setErrors(err.data);
-  //       }
-  //     }).finally(() => setPending(false))
-  //   ;
-  // }
+      setUser(user);
+    }
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col items-center justify-center p-4">
@@ -98,6 +96,7 @@ export function Register() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="email"
@@ -111,6 +110,25 @@ export function Register() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Enter your password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                  />
+
                 <Button
                   type="submit"
                   className="w-full"

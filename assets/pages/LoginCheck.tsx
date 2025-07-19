@@ -1,15 +1,10 @@
-import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {apiFetch} from "@/lib/fetch";
-import {type User} from "@/types";
 import {MessageSquare} from "lucide-react";
-import {toast} from "sonner";
-import {Link, useSearchParams} from "wouter";
-import {useAppStore} from "@/lib/store.ts";
+import {useSearchParams} from "wouter";
+import {Button} from "@/components/ui/button";
 
 export function LoginCheck() {
   const [params] = useSearchParams();
-  const setUser = useAppStore(state => state.setUser);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex flex-col items-center justify-center p-4">
@@ -33,30 +28,14 @@ export function LoginCheck() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              onClick={() => {
-                const formData = new FormData();
-
-                Array.from(params.entries()).forEach(([key, value]) => {
-                  formData.append(key, value);
-                });
-
-                apiFetch<User>("/api/auth/login_check", {
-                  method: "POST",
-                  data: formData
-                }).then(setUser)
-                  .catch(() => {
-                    toast.error(
-                      <>
-                        An error occured during login, try again <Link href="/login">here</Link>
-                      </>
-                    );
-                  });
-              }}
-              className="w-full"
-            >
-              Continue
-            </Button>
+            <form action="/api/auth/login_check" method="POST">
+              {Array.from(params.entries()).map(([key, val]) => (
+                <input key={key} value={val} name={key} type="hidden" />
+              ))}
+              <Button type="submit" className="w-full">
+               Continue to InstaChat
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>

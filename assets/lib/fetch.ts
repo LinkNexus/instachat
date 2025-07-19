@@ -54,12 +54,12 @@ export async function apiFetch<T>(
     : ((await response.text()) as T);
 }
 
-export class ApiError extends Error {
-  public data: any;
+export class ApiError<T> extends Error {
+  public data: T;
   public statusCode: number;
 
   constructor(
-    data: any,
+    data: T,
     statusCode: number
   ) {
     super();
@@ -69,25 +69,25 @@ export class ApiError extends Error {
   }
 }
 
-interface UseApiFetchOptions<T> extends Omit<ApiFetchOptions, "data"> {
-  onError?: (error: ApiError) => void;
+interface UseApiFetchOptions<T, S> extends ApiFetchOptions {
+  onError?: (error: ApiError<S>) => void;
   onSuccess?: (data: T) => void;
 }
 
-export function useApiFetch<T>(
+export function useApiFetch<T, S>(
   url: string,
-  options: UseApiFetchOptions<T> = {
+  options: UseApiFetchOptions<T, S> = {
     contentType: "json",
     accept: "json",
   },
   deps: any[] = []
 ) {
   const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
+  const [error, setError] = useState<ApiError<S> | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const { onError, onSuccess, ...restOptions } = options;
 
-  const fetchData = useCallback(async (data: ApiFetchOptions["data"]) => {
+  const fetchData = useCallback(async (data: ApiFetchOptions["data"] = options.data) => {
     if (loading) return; // Prevent multiple concurrent requests
 
     setLoading(true);
