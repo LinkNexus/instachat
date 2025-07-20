@@ -56,7 +56,7 @@ class SecurityController extends AbstractController
                 "violations" => [
                     [
                         "propertyPath" => "username",
-                        "title" => "The username {$user->getUsername()} is already in use by another account."
+                        "title" => "This username is already in use."
                     ]
                 ]
             ], Response::HTTP_BAD_REQUEST);
