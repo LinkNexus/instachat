@@ -5,12 +5,7 @@
 
     {% if app.user is not null %}
         <script>
-            window.user = {
-                id: {{ app.user.id }},
-                email: "{{ app.user.email|e('js') }}",
-                roles: {{ app.user.roles|json_encode|raw }},
-                name: "{{ app.user.name|e('js') }}"
-            }
+            window.user = JSON.parse('{{ app.user|serialize("json", { groups: ["user:read"] })|escape("js") }}');
         </script>
     {% endif %}
 {% endblock %}

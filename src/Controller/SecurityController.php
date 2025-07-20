@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Event\SendVerificationEmailEvent;
 use App\Security\EmailVerifier;
+use App\Security\LoginFormAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,7 +20,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 
 #[Route(path: "/api/auth", name: "api.auth.", priority: 5)]
@@ -51,31 +51,30 @@ class SecurityController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
+        if ($this->entityManager->getRepository(User::class)->findOneBy(['username' => $user->getUsername()])) {
+            return $this->json([
+                "violations" => [
+                    [
+                        "propertyPath" => "username",
+                        "title" => "The username {$user->getUsername()} is already in use by another account."
+                    ]
+                ]
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
         $user->setPassword($passwordHasher->hashPassword($user, $user->getPassword()));
         $this->entityManager->persist($user->setIsVerified(false));
         $this->entityManager->flush();
         $this->entityManager->refresh($user);
 
         $this->eventDispatcher->dispatch(new SendVerificationEmailEvent($user));
-        $security->login($user, "json_login", "main");
-
-        return $this->json(
-            $user,
-            Response::HTTP_CREATED,
-            [],
-            ['groups' => ['user:read']]
-        );
+        return $security->login($user, LoginFormAuthenticator::class, "main");
     }
 
     #[Route("/login", name: "login", methods: ["POST"])]
-    public function login(#[CurrentUser] $user): JsonResponse
+    public function login(): JsonResponse
     {
-        return $this->json(
-            $user,
-            $user ? Response::HTTP_OK : Response::HTTP_UNAUTHORIZED,
-            [],
-            ['groups' => ['user:read']]
-        );
+        throw new LogicException('This method can be blank - it will be intercepted by the login key on your firewall.');
     }
 
     #[Route("/resend-verification", name: "resend_verification", methods: ["POST"])]

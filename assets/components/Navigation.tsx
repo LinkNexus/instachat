@@ -12,6 +12,8 @@ import {Bell, LogOut, Menu, MessageSquare, Phone, Search, Settings, Users, Video
 import {useState} from "react";
 import {Link, useLocation} from "wouter";
 import {ThemeToggle} from "@/components/ThemeToggle.tsx";
+import type {User} from "@/types.ts";
+import {useAppStore} from "@/lib/store.ts";
 
 interface NavigationItem {
   href: string;
@@ -40,9 +42,11 @@ const navigationItems: NavigationItem[] = [
   },
 ];
 
-export function Navigation() {
+export function Navigation({user}: { user: User }) {
   const [location] = useLocation();
   const [isOnline, setIsOnline] = useState(true);
+
+  const { logout } = useAppStore(state => state);
 
   return (
     <nav className="bg-card border-b px-4 py-3 sticky top-0 z-50">
@@ -51,7 +55,7 @@ export function Navigation() {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <MessageSquare className="h-4 w-4 text-primary-foreground" />
+              <MessageSquare className="h-4 w-4 text-primary-foreground"/>
             </div>
             <span className="text-xl font-semibold">InstaChat</span>
           </div>
@@ -69,7 +73,7 @@ export function Navigation() {
                   variant={isActive ? "default" : "ghost"}
                   className="relative"
                 >
-                  <Icon className="h-4 w-4 mr-2" />
+                  <Icon className="h-4 w-4 mr-2"/>
                   {item.label}
                   {item.badge && item.badge > 0 && (
                     <Badge
@@ -89,15 +93,15 @@ export function Navigation() {
         <div className="flex items-center space-x-3">
           {/* Search Button */}
           <Button variant="ghost" size="icon" className="hidden md:flex">
-            <Search className="h-4 w-4" />
+            <Search className="h-4 w-4"/>
           </Button>
 
           {/* Theme Toggle */}
-          <ThemeToggle />
+          <ThemeToggle/>
 
           {/* Notifications */}
           <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-4 w-4" />
+            <Bell className="h-4 w-4"/>
             <Badge
               variant="destructive"
               className="absolute -top-1 -right-1 h-4 w-4 text-xs flex items-center justify-center"
@@ -109,10 +113,10 @@ export function Navigation() {
           {/* Call Actions */}
           <div className="hidden md:flex items-center space-x-1">
             <Button variant="ghost" size="icon">
-              <Phone className="h-4 w-4" />
+              <Phone className="h-4 w-4"/>
             </Button>
             <Button variant="ghost" size="icon">
-              <Video className="h-4 w-4" />
+              <Video className="h-4 w-4"/>
             </Button>
           </div>
 
@@ -122,11 +126,12 @@ export function Navigation() {
               <Button variant="ghost" className="relative p-1">
                 <div className="relative">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://github.com/shadcn.png" />
+                    <AvatarImage src="https://github.com/shadcn.png"/>
                     <AvatarFallback>JD</AvatarFallback>
                   </Avatar>
                   {isOnline && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-chart-1 rounded-full border-2 border-background" />
+                    <div
+                      className="absolute bottom-0 right-0 w-3 h-3 bg-chart-1 rounded-full border-2 border-background"/>
                   )}
                 </div>
               </Button>
@@ -134,29 +139,29 @@ export function Navigation() {
             <DropdownMenuContent align="end" className="w-56">
               <div className="flex items-center space-x-3 p-2">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarImage src="https://github.com/shadcn.png"/>
                   <AvatarFallback>JD</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <p className="font-medium">John Doe</p>
-                  <p className="text-sm text-muted-foreground">@john_doe</p>
+                  <p className="font-medium">{user.name}</p>
+                  <p className="text-sm text-muted-foreground">@{user.username}</p>
                 </div>
               </div>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator/>
               <DropdownMenuItem onClick={() => setIsOnline(!isOnline)}>
-                <div className={`w-2 h-2 rounded-full mr-3 ${isOnline ? 'bg-chart-1' : 'bg-muted-foreground/40'}`} />
+                <div className={`w-2 h-2 rounded-full mr-3 ${isOnline ? 'bg-chart-1' : 'bg-muted-foreground/40'}`}/>
                 {isOnline ? 'Online' : 'Offline'}
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator/>
               <Link href="/settings">
                 <DropdownMenuItem>
-                  <Settings className="h-4 w-4 mr-3" />
+                  <Settings className="h-4 w-4 mr-3"/>
                   Settings
                 </DropdownMenuItem>
               </Link>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <LogOut className="h-4 w-4 mr-3" />
+              <DropdownMenuSeparator/>
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="h-4 w-4 mr-3"/>
                 Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -166,7 +171,7 @@ export function Navigation() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-4 w-4" />
+                <Menu className="h-4 w-4"/>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -177,7 +182,7 @@ export function Navigation() {
                 return (
                   <Link key={item.href} href={item.href}>
                     <DropdownMenuItem className={isActive ? "bg-accent" : ""}>
-                      <Icon className="h-4 w-4 mr-3" />
+                      <Icon className="h-4 w-4 mr-3"/>
                       {item.label}
                       {item.badge && item.badge > 0 && (
                         <Badge variant="destructive" className="ml-auto">
@@ -188,9 +193,9 @@ export function Navigation() {
                   </Link>
                 );
               })}
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator/>
               <DropdownMenuItem>
-                <Search className="h-4 w-4 mr-3" />
+                <Search className="h-4 w-4 mr-3"/>
                 Search
               </DropdownMenuItem>
             </DropdownMenuContent>

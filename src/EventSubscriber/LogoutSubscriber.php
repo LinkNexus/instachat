@@ -18,6 +18,6 @@ final readonly class LogoutSubscriber implements EventSubscriberInterface
 
     public function onLogout(LogoutEvent $event): void
     {
-        $event->setResponse(new JsonResponse(["success" => true]));
+        $event->setResponse(new JsonResponse(null));
     }
 }

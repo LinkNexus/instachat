@@ -37,10 +37,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var string The hashed password
      */
     #[ORM\Column]
-    #[Assert\Sequentially([
-        new Assert\PasswordStrength,
-        new Assert\NotCompromisedPassword
-    ])]
+//    #[Assert\Sequentially([
+//        new Assert\PasswordStrength,
+//        new Assert\NotCompromisedPassword
+//    ])]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
@@ -54,6 +54,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     #[Groups(["user:read"])]
     private ?bool $isVerified = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\Sequentially([
+        new Assert\Length(min: 3, max: 255, minMessage: "The username must be at least {{ limit }} characters long", maxMessage: "The username must be at most {{ limit }} characters long"),
+        new Assert\Regex(pattern: "/^[a-zA-Z0-9_]+$/", message: "The username can only contain letters, numbers and underscores.")
+    ])]
+    #[Groups(["user:read"])]
+    private ?string $username = null;
 
     public function getId(): ?int
     {
@@ -79,7 +87,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string)$this->email;
     }
 
     /**
@@ -124,8 +132,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function __serialize(): array
     {
-        $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+        $data = (array)$this;
+        $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
 
         return $data;
     }
@@ -156,6 +164,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsVerified(bool $isVerified): static
     {
         $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    public function getUsername(): ?string
+    {
+        return $this->username;
+    }
+
+    public function setUsername(string $username): static
+    {
+        $this->username = $username;
 
         return $this;
     }

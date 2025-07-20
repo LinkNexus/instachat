@@ -1,6 +1,7 @@
 import {create} from 'zustand';
 import {combine, persist} from 'zustand/middleware';
 import type {User} from '@/types';
+import {apiFetch} from "@/lib/fetch.ts";
 
 type Theme = "dark" | "light" | "system"
 
@@ -9,20 +10,21 @@ export const useAppStore = create(
     combine(
       {
         user: window.user,
-        lastRequestedUrl: null as string | null,
         theme: "system" as Theme
       },
       (set) => ({
         setUser: (user: User | undefined) => set({ user }),
-        setLastRequestedUrl: (url: string) => set({lastRequestedUrl: url}),
-        setTheme: (theme: Theme) => set({theme})
+        setTheme: (theme: Theme) => set({theme}),
+        logout: () => {
+          apiFetch("/api/auth/logout")
+            .then(() => set({ user: undefined }))
+        }
       })
     ),
     {
       name: "app-store",
       partialize: (store) => ({
         theme: store.theme,
-        lastRequestedUrl: store.lastRequestedUrl,
       })
     }
   )
