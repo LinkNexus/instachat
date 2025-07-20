@@ -22,7 +22,7 @@ class UsersFixtures extends Fixture
             ->setEmail("admin@test.com")
             ->setPassword($this->userPasswordHasher->hashPassword($user, "test"))
             ->setRoles(["ROLE_ADMIN"])
-            ->setIsVerified(false);
+            ->setIsVerified(true);
 
         $manager->persist($user);
         $manager->flush();
