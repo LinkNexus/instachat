@@ -45,7 +45,7 @@ class SecurityController extends AbstractController
                 "violations" => [
                     [
                         "propertyPath" => "email",
-                        "title" => "The email {$user->getEmail()} is already in use by another account."
+                        "title" => "This email is already in use by another account."
                     ]
                 ]
             ], Response::HTTP_BAD_REQUEST);
