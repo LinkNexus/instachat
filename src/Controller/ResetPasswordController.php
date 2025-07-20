@@ -35,7 +35,13 @@ final class ResetPasswordController extends AbstractController
     #[Route("", name: "request", methods: ["POST"])]
     public function request(Request $request): JsonResponse
     {
-        $email = json_decode($request->getContent())->identifier;
+        $decodedContent = json_decode($request->getContent());
+        if (is_null($decodedContent) || !property_exists($decodedContent, 'identifier')) {
+            return $this->json([
+                "error" => "Invalid JSON or missing 'identifier' property."
+            ], Response::HTTP_BAD_REQUEST);
+        }
+        $email = $decodedContent->identifier;
         return $this->processSendingPasswordResetEmail($email);
     }
 
