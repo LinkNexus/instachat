@@ -2,4 +2,10 @@
 
 {% block body %}
     <div id="root"></div>
+
+    {% if app.user is not null %}
+        <script>
+            window.user = JSON.parse('{{ app.user|serialize("json", { groups: ["user:read"] })|escape("js") }}');
+        </script>
+    {% endif %}
 {% endblock %}
