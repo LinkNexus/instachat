@@ -18,7 +18,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["user:read"])]
+    #[Groups(["user:read", "users:read", "messages:read"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
@@ -30,21 +30,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var list<string> The user roles
      */
     #[ORM\Column]
-    #[Groups(["user:read"])]
+    #[Groups(["user:read", "users:read"])]
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
-//    #[Assert\Sequentially([
-//        new Assert\PasswordStrength,
-//        new Assert\NotCompromisedPassword
-//    ])]
+    #[Assert\Sequentially([
+        new Assert\PasswordStrength,
+        new Assert\NotCompromisedPassword
+    ])]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["user:read"])]
+    #[Groups(["user:read", "users:read"])]
     #[Assert\Sequentially([
         new Assert\Length(min: 3, max: 255, minMessage: "The name must be at least {{ limit }} characters long", maxMessage: "The name must be at most {{ limit }} characters long"),
         new Assert\Regex(pattern: "/^[a-zA-Z0-9_ ]+$/", message: "The name can only contain letters, numbers, spaces and underscores.")
@@ -60,8 +60,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         new Assert\Length(min: 3, max: 255, minMessage: "The username must be at least {{ limit }} characters long", maxMessage: "The username must be at most {{ limit }} characters long"),
         new Assert\Regex(pattern: "/^[a-zA-Z0-9_]+$/", message: "The username can only contain letters, numbers and underscores.")
     ])]
-    #[Groups(["user:read"])]
+    #[Groups(["user:read", "users:read"])]
     private ?string $username = null;
+
+    #[ORM\Column(length: 200, nullable: true)]
+    #[Groups(["user:read", "users:read"])]
+    private ?string $bio = null;
 
     public function getId(): ?int
     {
@@ -176,6 +180,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUsername(string $username): static
     {
         $this->username = $username;
+
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): static
+    {
+        $this->bio = $bio;
 
         return $this;
     }

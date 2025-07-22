@@ -62,7 +62,7 @@ export function Navigation({user}: { user: User }) {
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
+        <div className="hidden md:flex space-x-2 items-center lg:space-x-6">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.startsWith(item.href);

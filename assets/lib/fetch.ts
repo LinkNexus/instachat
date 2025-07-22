@@ -36,12 +36,6 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
-    // if (response.status === 401) {
-    //   toast.error("Unauthorized access - please log in again.", { closeButton: true });
-    //   // Clear user state on 401 by accessing the store directly
-    //   useAppStore.getState().setUser(null);
-    // }
-
     throw new ApiError(await response.json(), response.status);
   }
 
@@ -72,6 +66,7 @@ export class ApiError<T> extends Error {
 interface UseApiFetchOptions<T, S> extends ApiFetchOptions {
   onError?: (error: ApiError<S>) => void;
   onSuccess?: (data: T) => void;
+  finally?: () => void;
 }
 
 export function useApiFetch<T, S>(
@@ -110,6 +105,7 @@ export function useApiFetch<T, S>(
       }
     } finally {
       setLoading(false);
+      options.finally?.();
     }
   }, [url, loading, ...deps]);
 

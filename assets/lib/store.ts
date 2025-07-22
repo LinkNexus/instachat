@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import {combine, persist} from 'zustand/middleware';
-import type {User} from '@/types';
+import type {Conversation, Message, User} from '@/types';
 import {apiFetch} from "@/lib/fetch.ts";
 
 type Theme = "dark" | "light" | "system"
@@ -10,14 +10,63 @@ export const useAppStore = create(
     combine(
       {
         user: window.user,
-        theme: "system" as Theme
+        theme: "system" as Theme,
+        conversations: [] as Conversation[]
       },
-      (set) => ({
-        setUser: (user: User | undefined) => set({ user }),
+      (set, get) => ({
+        setUser: (user: User | undefined) => set({user}),
         setTheme: (theme: Theme) => set({theme}),
         logout: () => {
           apiFetch("/api/auth/logout")
-            .then(() => set({ user: undefined }))
+            .then(() => set({user: undefined}))
+        },
+        conversationsActions: {
+          addConversation: (conversation: Conversation) => set((state) => {
+            if (state.conversations.some(c => c.user.id === conversation.user.id)) {
+              return state; // Conversation already exists
+            }
+            return {conversations: [...state.conversations, conversation]};
+          }),
+          getConversation: (partnerId: number) => {
+            return get().conversations.find(c => c.user.id === partnerId);
+          },
+          addMessage: (partnerId: number, message: Message) => {
+            set((state) => {
+              const conversationIndex = state.conversations.findIndex(c => c.user.id === partnerId);
+              if (conversationIndex !== -1 && !state.conversations[conversationIndex].messages.some(m => m.id === message.id)) {
+                const updatedConversations = [...state.conversations];
+                updatedConversations[conversationIndex].messages.push(message);
+                return {conversations: updatedConversations};
+              }
+              return state;
+            });
+          },
+          prependMessages(partnerId: number, messages: Message[]) {
+            set((state) => {
+              const conversationIndex = state.conversations.findIndex(c => c.user.id === partnerId);
+              if (conversationIndex !== -1) {
+                const updatedConversations = [...state.conversations];
+                messages.forEach(m => {
+                  if (!updatedConversations[conversationIndex].messages.some(existingMessage => existingMessage.id === m.id)) {
+                    updatedConversations[conversationIndex].messages.unshift(m);
+                  }
+                })
+                return {conversations: updatedConversations};
+              }
+              return state;
+            });
+          },
+          switchMessagesLoaded(partnerId: number) {
+            set((state) => {
+              const conversationIndex = state.conversations.findIndex(c => c.user.id === partnerId);
+              if (conversationIndex !== -1) {
+                const updatedConversations = [...state.conversations];
+                updatedConversations[conversationIndex].messagesLoaded = true;
+                return {conversations: updatedConversations};
+              }
+              return state;
+            });
+          }
         }
       })
     ),

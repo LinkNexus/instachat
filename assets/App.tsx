@@ -8,12 +8,15 @@ import {useAppStore} from "@/lib/store.ts";
 import {useEffect} from "react";
 import {Navigation} from "@/components/Navigation.tsx";
 import {EmailVerificationBanner} from "@/components/EmailVerificationBanner.tsx";
-import {Chat} from "@/pages/Chat.tsx";
 import {Friends} from "@/pages/Friends.tsx";
 import {Settings} from "@/pages/Settings.tsx";
 import {MessageSquare} from "lucide-react";
 import {ForgotPassword} from "@/pages/Auth/ForgotPassword.tsx";
 import {ResetPassword} from "@/pages/Auth/ResetPassword.tsx";
+import {NewChat} from "@/pages/NewChat.tsx";
+import {ChatLayout} from "@/pages/Chat/Layout.tsx";
+import {Chats} from "@/pages/Chat/Chats.tsx";
+import {Discussion} from "@/pages/Chat/Discussion.tsx";
 
 export default function App() {
   useFlashMessages();
@@ -48,9 +51,15 @@ export default function App() {
             <EmailVerificationBanner user={user}/>
           )}
           <Switch>
-            <Route path="/chat" component={Chat}/>
+            <Route path="/chat" nest>
+              <ChatLayout>
+                <Route path="/" component={Chats}/>
+                <Route path="/friends/:username" component={Discussion}/>
+              </ChatLayout>
+            </Route>
             <Route path="/friends" component={Friends}/>
             <Route path="/settings" component={Settings}/>
+            <Route path="/new-chat" component={NewChat}/>
             <Route component={() => <Redirect to="/chat"/>}/>
           </Switch>
         </>
@@ -70,8 +79,8 @@ export default function App() {
             <Switch>
               <Route path="/login" component={Login}/>
               <Route path="/register" component={Register}/>
-              <Route path="/forgot-password" component={ForgotPassword} />
-              <Route path="/reset-password" component={ResetPassword} />
+              <Route path="/forgot-password" component={ForgotPassword}/>
+              <Route path="/reset-password" component={ResetPassword}/>
               <Route component={() => <Redirect to="/login"/>}/>
             </Switch>
           </div>
