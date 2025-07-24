@@ -2,10 +2,12 @@
 
 namespace App\Security;
 
+use App\Entity\User;
 use App\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mercure\Authorization;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\BadCredentialsException;
@@ -25,7 +27,8 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
 {
     public function __construct(
         private readonly UserRepository      $repository,
-        private readonly SerializerInterface $serializer
+        private readonly SerializerInterface $serializer,
+        private readonly Authorization $authorization
     )
     {
     }
@@ -68,8 +71,13 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        /** @var User $user */
+        $user = $token->getUser();
+        $this->authorization->setCookie($request, [
+            "https://example.com/messages/{$user->getId()}"
+        ]);
         return new JsonResponse(
-            $this->serializer->serialize($token->getUser(), 'json', ['groups' => 'user:read']),
+            $this->serializer->serialize($user, 'json', ['groups' => 'user:read']),
             Response::HTTP_OK,
             json: true
         );

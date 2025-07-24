@@ -8,18 +8,25 @@ export interface User {
 }
 
 export interface Conversation {
-  user: Omit<User, "email"|"isVerified">;
+  user: Omit<User, "email"|"isVerified"|"role">;
   messages: Message[];
   unreadCount: number;
   messagesLoaded?: boolean;
+  noMoreMessages?: boolean;
 }
 
 export interface Message {
   id: number;
   content: string;
-  sender: Pick<User, "id">;
-  receiver: Pick<User, "id">;
+  sender: Omit<User, "email"|"isVerified"|"role">;
+  receiver: Omit<User, "email"|"isVerified"|"role">;
   createdAt: string;
   modifiedAt: string;
   readAt?: string;
+}
+
+export interface Contacts {
+  friends: Omit<User, "email">[];
+  groups: any[];
+  loaded: boolean;
 }

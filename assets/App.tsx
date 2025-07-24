@@ -5,7 +5,6 @@ import {Toaster} from "sonner";
 import {Register} from "@/pages/Auth/Register.tsx";
 import {useFlashMessages} from "@/lib/flash-messages.ts";
 import {useAppStore} from "@/lib/store.ts";
-import {useEffect} from "react";
 import {Navigation} from "@/components/Navigation.tsx";
 import {EmailVerificationBanner} from "@/components/EmailVerificationBanner.tsx";
 import {Friends} from "@/pages/Friends.tsx";
@@ -13,32 +12,19 @@ import {Settings} from "@/pages/Settings.tsx";
 import {MessageSquare} from "lucide-react";
 import {ForgotPassword} from "@/pages/Auth/ForgotPassword.tsx";
 import {ResetPassword} from "@/pages/Auth/ResetPassword.tsx";
-import {NewChat} from "@/pages/NewChat.tsx";
+import {Contacts} from "@/pages/Contacts.tsx";
 import {ChatLayout} from "@/pages/Chat/Layout.tsx";
 import {Chats} from "@/pages/Chat/Chats.tsx";
 import {Discussion} from "@/pages/Chat/Discussion.tsx";
+import {useTheme} from "@/lib/theme.ts";
+import {useMessages} from "@/lib/messages.ts";
 
 export default function App() {
   useFlashMessages();
+  useTheme();
+  useMessages();
 
-  const {user, theme} = useAppStore(state => state);
-
-  useEffect(() => {
-    const root = window.document.documentElement
-    root.classList.remove("light", "dark")
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
-
-      root.classList.add(systemTheme)
-      return;
-    }
-
-    root.classList.add(theme)
-  }, [theme]);
+  const {user} = useAppStore(state => state);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -54,12 +40,12 @@ export default function App() {
             <Route path="/chat" nest>
               <ChatLayout>
                 <Route path="/" component={Chats}/>
-                <Route path="/friends/:username" component={Discussion}/>
+                <Route path="/friends/:id" component={Discussion}/>
               </ChatLayout>
             </Route>
             <Route path="/friends" component={Friends}/>
             <Route path="/settings" component={Settings}/>
-            <Route path="/new-chat" component={NewChat}/>
+            <Route path="/contacts" component={Contacts}/>
             <Route component={() => <Redirect to="/chat"/>}/>
           </Switch>
         </>

@@ -1,68 +1,54 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Card, CardContent } from "@/components/ui/card.tsx";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
+import {Badge} from "@/components/ui/badge.tsx";
+import {Button} from "@/components/ui/button.tsx";
+import {Card, CardContent} from "@/components/ui/card.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { ScrollArea } from "@/components/ui/scroll-area.tsx";
-import { Skeleton } from "@/components/ui/skeleton.tsx";
-import { useIsMobile } from "@/hooks/use-mobile.ts";
-import { useApiFetch } from "@/lib/fetch.ts";
-import { useAppStore } from "@/lib/store.ts";
-import type { Message, User } from "@/types.ts";
-import { MoreVertical, Plus, Search, Settings, Users } from "lucide-react";
-import { useEffect } from "react";
-import { Link, useRoute } from "wouter";
-import { navigate } from "wouter/use-browser-location";
+import {Input} from "@/components/ui/input.tsx";
+import {ScrollArea} from "@/components/ui/scroll-area.tsx";
+import {Skeleton} from "@/components/ui/skeleton.tsx";
+import {useIsMobile} from "@/hooks/use-mobile.ts";
+import {useApiFetch} from "@/lib/fetch.ts";
+import {useAppStore} from "@/lib/store.ts";
+import type {Message, User} from "@/types.ts";
+import {MoreVertical, Plus, Search, Settings, Users} from "lucide-react";
+import {useEffect} from "react";
+import {Link, useRoute} from "wouter";
+import {navigate} from "wouter/use-browser-location";
 
 export function ChatLayout({ children }: { children?: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const { user, conversations } = useAppStore(state => state);
-  const { addConversation, getConversation, addMessage } = useAppStore.getState().conversationsActions;
+  const [match, params] = useRoute("/friends/:username");
+
+  const { conversations } = useAppStore(state => state);
+  const { addConversation } = useAppStore.getState().conversationsActions;
+
   const chats = conversations.filter(c => c.messages.length > 0)
     .map(c => ({
       user: c.user,
       lastMessage: c.messages[c.messages.length - 1],
-      unreadCount: c.messages.filter(m => m.receiver.id === user!.id && !m.readAt).length,
+      unreadCount: c.unreadCount
     }))
     .sort(
       (a, b) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime()
     );
-
-  const [match, params] = useRoute("/friends/:username");
   const selectedChat = chats.find(c => c.user.username === params?.username);
 
   const {
     callback: fetchChats,
     loading: loadingChats,
-  } = useApiFetch("/api/chat/list", {
-    onSuccess(res: { user: User, unreadCount: number, lastMessage: Message }[]) {
-      res.forEach(c => {
-        const conversation = getConversation(c.user.id);
-        if (conversation) {
-          if (conversation.messages.length === 0) {
-            addMessage(c.user.id, c.lastMessage);
-          }
-          return;
-        }
-        addConversation({
-          user: c.user,
-          messages: [c.lastMessage],
-          unreadCount: c.unreadCount,
-          messagesLoaded: false
-        })
-      })
+  } = useApiFetch("/api/conversations", {
+    onSuccess(res: { user: User, unreadCount: number, messages: Message[] }[]) {
+      res.forEach(addConversation)
     }
   });
 
   useEffect(() => {
-    if (chats.length !== 0) return;
-    fetchChats();
+    if (chats.length === 0) fetchChats();
   }, []);
 
   const formatTime = (date: Date) => {
@@ -126,7 +112,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link to="~/new-chat">
+                    <Link to="~/contacts">
                       <Plus className="h-4 w-4 mr-2" />
                       New Chat
                     </Link>
@@ -170,7 +156,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                   Start a new conversation to see your chats here
                 </p>
                 <Button asChild>
-                  <Link to="/new-chat">
+                  <Link to="~/new-chat">
                     <Plus className="h-4 w-4 mr-2" />
                     New Chat
                   </Link>
@@ -183,7 +169,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                   className={`mb-2 cursor-pointer transition-colors hover:bg-accent ${match && selectedChat?.user.id === chat.user.id ? "bg-accent" : ""
                     }`}
                   onClick={() => {
-                    navigate("/chat/friends/" + chat.user.username, {
+                    navigate("/chat/friends/" + chat.user.id, {
                       replace: false
                     });
                   }}
@@ -215,7 +201,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                           </p>
                           {chat.unreadCount > 0 && (
                             <Badge variant="destructive" className="text-xs">
-                              {chat.unreadCount}
+                              {chat.unreadCount >= 100 ? '99+' : chat.unreadCount}
                             </Badge>
                           )}
                         </div>

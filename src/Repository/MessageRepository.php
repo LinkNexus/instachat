@@ -23,11 +23,11 @@ class MessageRepository extends ServiceEntityRepository
      * @param int $receiverId
      * @param int $limit
      * @param int $offset
-     * @return Message[] Returns an array of Message objects
+     * @return Message[] Returns an array of MessageComponent objects
      */
     public function findAllByConversation(int $senderId, int $receiverId, int $offset = 0, int $limit = 10): array
     {
-        return $this->createQueryBuilder('m')
+        return array_reverse($this->createQueryBuilder('m')
             ->where('(m.sender = :senderId AND m.receiver = :receiverId) OR (m.receiver = :senderId AND m.sender = :receiverId)')
             ->setParameters(new ArrayCollection([
                 new Parameter('senderId', $senderId),
@@ -37,7 +37,8 @@ class MessageRepository extends ServiceEntityRepository
             ->orderBy('m.createdAt', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        );
     }
 
     public function findUnreadMessagesCount(int $currentUserId, int $receiverId): int
@@ -68,7 +69,7 @@ class MessageRepository extends ServiceEntityRepository
     }
 
     //    /**
-    //     * @return Message[] Returns an array of Message objects
+    //     * @return MessageComponent[] Returns an array of MessageComponent objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -82,7 +83,7 @@ class MessageRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Message
+    //    public function findOneBySomeField($value): ?MessageComponent
     //    {
     //        return $this->createQueryBuilder('m')
     //            ->andWhere('m.exampleField = :val')
