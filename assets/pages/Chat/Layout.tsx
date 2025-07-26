@@ -163,7 +163,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                   Start a new conversation to see your chats here
                 </p>
                 <Button asChild>
-                  <Link to="~/new-chat">
+                  <Link to="~/contacts">
                     <Plus className="h-4 w-4 mr-2" />
                     New Chat
                   </Link>
