@@ -18,6 +18,8 @@ import {Chats} from "@/pages/Chat/Chats.tsx";
 import {Discussion} from "@/pages/Chat/Discussion.tsx";
 import {useTheme} from "@/lib/theme.ts";
 import {useMessages} from "@/lib/messages.ts";
+import {useEffect} from "react";
+import {env} from "@/lib/env.ts";
 
 export default function App() {
   useFlashMessages();
@@ -25,6 +27,18 @@ export default function App() {
   useMessages();
 
   const {user} = useAppStore(state => state);
+  const {readMessages} = useAppStore.getState().conversationsActions;
+
+  useEffect(() => {
+    const url = new URL(env.VITE_SITE_NAME + "/.well-known/mercure");
+    url.searchParams.append("topic", `https://example.com/read-messages/${user?.id}`);
+    const es = new EventSource(url);
+
+    es.addEventListener("message", (event) => {
+      const { partnerId } = JSON.parse(event.data);
+      readMessages(partnerId);
+    })
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">

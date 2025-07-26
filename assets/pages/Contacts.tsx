@@ -1,18 +1,18 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useApiFetch } from "@/lib/fetch.ts";
-import { useAppStore } from "@/lib/store.ts";
-import type { Contacts } from "@/types.ts";
-import { ArrowLeft, Globe, Lock, MessageSquare, Search, UserPlus, Users } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Link } from "wouter";
-import { navigate } from "wouter/use-browser-location";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {Badge} from "@/components/ui/badge";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
+import {Skeleton} from "@/components/ui/skeleton";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {useApiFetch} from "@/lib/fetch.ts";
+import {useAppStore} from "@/lib/store.ts";
+import type {Contacts} from "@/types.ts";
+import {ArrowLeft, Globe, Lock, MessageSquare, Search, UserPlus, Users} from "lucide-react";
+import {useEffect, useState} from "react";
+import {toast} from "sonner";
+import {Link} from "wouter";
+import {navigate} from "wouter/use-browser-location";
 
 interface Group {
   id: string;
@@ -89,7 +89,7 @@ export function Contacts() {
 
   const handleStartChat = async (contact: Contacts["friends"][0]) => {
     addConversation({
-      user: contact,
+      partner: contact,
       messages: [],
       messagesLoaded: false,
       unreadCount: 0

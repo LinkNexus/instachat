@@ -7,7 +7,7 @@ interface ApiFetchOptions extends Omit<RequestInit, "body"> {
 }
 
 export async function apiFetch<T>(
-  url: string,
+  url: string|URL,
   options: ApiFetchOptions = {
     data: null,
     contentType: "json",
@@ -65,12 +65,12 @@ export class ApiError<T> extends Error {
 
 interface UseApiFetchOptions<T, S> extends ApiFetchOptions {
   onError?: (error: ApiError<S>) => void;
-  onSuccess?: (data: T) => void;
+  onSuccess?: (data: T) => void|Promise<void>;
   finally?: () => void;
 }
 
 export function useApiFetch<T, S>(
-  url: string,
+  url: string|URL,
   options: UseApiFetchOptions<T, S> = {
     contentType: "json",
     accept: "json",
@@ -94,7 +94,7 @@ export function useApiFetch<T, S>(
         data
       });
       setData(res);
-      onSuccess?.(res);
+      await onSuccess?.(res);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err);

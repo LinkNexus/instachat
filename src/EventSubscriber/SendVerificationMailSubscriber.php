@@ -2,13 +2,13 @@
 
 namespace App\EventSubscriber;
 
-use App\Event\SendVerificationEmailEvent;
+use App\Event\SendVerificationMailEvent;
 use App\Security\EmailVerifier;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mime\Address;
 
-final readonly class SendVerificationEmailSubscriber implements EventSubscriberInterface
+final readonly class SendVerificationMailSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private EmailVerifier $emailVerifier,
@@ -19,11 +19,11 @@ final readonly class SendVerificationEmailSubscriber implements EventSubscriberI
     public static function getSubscribedEvents(): array
     {
         return [
-            SendVerificationEmailEvent::class => "sendVerificationEmail"
+            SendVerificationMailEvent::class => "sendVerificationEmail"
         ];
     }
 
-    public function sendVerificationEmail(SendVerificationEmailEvent $event): void
+    public function sendVerificationEmail(SendVerificationMailEvent $event): void
     {
         $user = $event->getUser();
         $this->emailVerifier->sendEmailConfirmation("api.auth.verify_email", $user, (new TemplatedEmail)

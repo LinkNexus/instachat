@@ -94,9 +94,9 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
         // Reorder users according to the original sort order
         $orderedUsers = [];
-        foreach ($userIds as $userId) {
+        foreach ($userIds as $id) {
             foreach ($users as $user) {
-                if ($user->getId() === (int)$userId) {
+                if ($user->getId() === (int)$id) {
                     $orderedUsers[] = $user;
                     break;
                 }

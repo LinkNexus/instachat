@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {useAppStore} from "@/lib/store.ts";
-import type {Message} from "@/types.ts";
+import type {Message, MessageEvent as MessageEventType} from "@/types.ts";
 import {notify} from "@/lib/notifications.ts";
 import {useLocation} from "wouter";
 
@@ -23,36 +23,42 @@ export function useMessages() {
       document.addEventListener("visibilitychange", changeIsOnPage);
 
       eventSource.addEventListener("message", (event) => {
-        const message = JSON.parse(event.data) as Message;
+        const {event: messageEvent, message } = JSON.parse(event.data) as { event: MessageEventType, message: Message };
 
         if (message.sender.id === user.id) {
           return; // Ignore messages sent by the current user
         }
 
         const conversation = getConversation(message.sender.id);
-        if (conversation) {
-          addMessage(conversation.user.id, message);
-        } else {
-          addConversation({
-            user: message.sender,
-            messages: [message],
-            messagesLoaded: false,
-          })
-        }
 
-        if (location !== `/chat/friends/${message.sender.username}` || !isOnPage) {
-          notify({
-            title: `New Message from ${message.sender.name}`,
-            body: message.content,
-            events: {
-              onClick() {
-                navigate(`/chat/friends/${message.sender.username}`, {
-                  replace: false
-                });
-                window.focus();
-              }
+        switch (messageEvent) {
+          case "message.created":
+            if (conversation) {
+              addMessage(conversation.partner.id, message);
+            } else {
+              addConversation({
+                partner: message.sender,
+                messages: [message],
+                loaded: false,
+                unreadCount: 1,
+                count: 1
+              });
             }
-          });
+
+            if (location !== `/chat/friends/${message.sender.id}` || !isOnPage) {
+              notify({
+                title: `New Message from ${message.sender.name}`,
+                body: message.content,
+                events: {
+                  onClick() {
+                    navigate(`/chat/friends/${message.sender.id}`, {
+                      replace: false
+                    });
+                  }
+                }
+              });
+            }
+            break;
         }
       });
 

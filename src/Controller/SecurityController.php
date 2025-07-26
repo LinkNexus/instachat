@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Event\SendVerificationEmailEvent;
+use App\Event\SendVerificationMailEvent;
 use App\Security\EmailVerifier;
 use App\Security\LoginFormAuthenticator;
 use Doctrine\ORM\EntityManagerInterface;
@@ -67,7 +67,7 @@ class SecurityController extends AbstractController
         $this->entityManager->flush();
         $this->entityManager->refresh($user);
 
-        $this->eventDispatcher->dispatch(new SendVerificationEmailEvent($user));
+        $this->eventDispatcher->dispatch(new SendVerificationMailEvent($user));
         return $security->login($user, LoginFormAuthenticator::class, "main");
     }
 
@@ -85,7 +85,7 @@ class SecurityController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
         if (!$user->isVerified()) {
-            $this->eventDispatcher->dispatch(new SendVerificationEmailEvent($user));
+            $this->eventDispatcher->dispatch(new SendVerificationMailEvent($user));
         }
 
         return $this->json(null, Response::HTTP_NO_CONTENT);

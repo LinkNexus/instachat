@@ -4,7 +4,7 @@ namespace App\Event;
 
 use App\Entity\User;
 
-final readonly class SendVerificationEmailEvent
+final readonly class SendVerificationMailEvent
 {
     public function __construct(private readonly User $user)
     {

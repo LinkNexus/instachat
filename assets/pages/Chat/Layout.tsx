@@ -14,36 +14,43 @@ import {Skeleton} from "@/components/ui/skeleton.tsx";
 import {useIsMobile} from "@/hooks/use-mobile.ts";
 import {useApiFetch} from "@/lib/fetch.ts";
 import {useAppStore} from "@/lib/store.ts";
-import type {Message, User} from "@/types.ts";
+import {limitString} from "@/lib/strings";
+import type {Conversation} from "@/types.ts";
 import {MoreVertical, Plus, Search, Settings, Users} from "lucide-react";
 import {useEffect} from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {Link, useRoute} from "wouter";
 import {navigate} from "wouter/use-browser-location";
 
 export function ChatLayout({ children }: { children?: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const [match, params] = useRoute("/friends/:username");
+  const [match, params] = useRoute("/friends/:id");
 
   const { conversations } = useAppStore(state => state);
   const { addConversation } = useAppStore.getState().conversationsActions;
 
   const chats = conversations.filter(c => c.messages.length > 0)
     .map(c => ({
-      user: c.user,
+      user: c.partner,
       lastMessage: c.messages[c.messages.length - 1],
       unreadCount: c.unreadCount
     }))
     .sort(
       (a, b) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime()
     );
-  const selectedChat = chats.find(c => c.user.username === params?.username);
 
   const {
     callback: fetchChats,
     loading: loadingChats,
   } = useApiFetch("/api/conversations", {
-    onSuccess(res: { user: User, unreadCount: number, messages: Message[] }[]) {
-      res.forEach(addConversation)
+    onSuccess(res: Omit<Conversation, "loaded">[]) {
+      res.forEach((c) => {
+        addConversation({
+          ...c,
+          loaded: true
+        })
+      })
     }
   });
 
@@ -140,7 +147,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
 
         {/* Index List */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="p-2">
+          <div className="p-2 flex flex-col space-y-2">
             {loadingChats ? (
               // Show skeleton loaders while loading
               Array.from({ length: 6 }, (_, index) => (
@@ -166,7 +173,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
               chats.map((chat) => (
                 <Card
                   key={chat.user.id}
-                  className={`mb-2 cursor-pointer transition-colors hover:bg-accent ${match && selectedChat?.user.id === chat.user.id ? "bg-accent" : ""
+                  className={`cursor-pointer transition-colors hover:bg-accent overflow-hidden ${match && Number(params?.id) === chat.user.id ? "bg-accent" : ""
                     }`}
                   onClick={() => {
                     navigate("/chat/friends/" + chat.user.id, {
@@ -175,8 +182,8 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                   }}
                 >
                   <CardContent className="p-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="relative flex-shrink-0">
                         <Avatar>
                           <AvatarImage src={""} />
                           <AvatarFallback>
@@ -188,19 +195,21 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                             className="absolute bottom-0 right-0 w-3 h-3 bg-chart-1 rounded-full border-2 border-background" />
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium truncate">{chat.user.name}</p>
-                          <span className="text-xs text-muted-foreground">
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="font-medium truncate flex-1 min-w-0">{chat.user.name}</p>
+                          <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
                             {formatLastMessageTime(chat.lastMessage.createdAt)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-muted-foreground truncate">
-                            {chat.lastMessage.content}
-                          </p>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="text-sm text-muted-foreground truncate flex-1 min-w-0 prose dark:prose-invert">
+                            <Markdown remarkPlugins={[remarkGfm]}>
+                              {limitString(chat.lastMessage.content, 30)}
+                            </Markdown>
+                          </div>
                           {chat.unreadCount > 0 && (
-                            <Badge variant="destructive" className="text-xs">
+                            <Badge variant="destructive" className="text-xs flex-shrink-0">
                               {chat.unreadCount >= 100 ? '99+' : chat.unreadCount}
                             </Badge>
                           )}
