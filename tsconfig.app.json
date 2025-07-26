@@ -32,6 +32,7 @@
     }
   },
   "include": [
-    "assets"
+    "assets",
+    "vite-env.d.ts"
   ]
 }

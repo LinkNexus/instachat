@@ -44,7 +44,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["user:read", "users:read"])]
+    #[Groups(["user:read", "users:read", "messages:read"])]
     #[Assert\Sequentially([
         new Assert\Length(min: 3, max: 255, minMessage: "The name must be at least {{ limit }} characters long", maxMessage: "The name must be at most {{ limit }} characters long"),
         new Assert\Regex(pattern: "/^[a-zA-Z0-9_ ]+$/", message: "The name can only contain letters, numbers, spaces and underscores.")
@@ -60,11 +60,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         new Assert\Length(min: 3, max: 255, minMessage: "The username must be at least {{ limit }} characters long", maxMessage: "The username must be at most {{ limit }} characters long"),
         new Assert\Regex(pattern: "/^[a-zA-Z0-9_]+$/", message: "The username can only contain letters, numbers and underscores.")
     ])]
-    #[Groups(["user:read", "users:read"])]
+    #[Groups(["user:read", "users:read", "messages:read"])]
     private ?string $username = null;
 
     #[ORM\Column(length: 200, nullable: true)]
-    #[Groups(["user:read", "users:read"])]
+    #[Groups(["user:read", "users:read", "messages:read"])]
     private ?string $bio = null;
 
     public function getId(): ?int

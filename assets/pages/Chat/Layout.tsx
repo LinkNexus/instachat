@@ -1,68 +1,61 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Card, CardContent } from "@/components/ui/card.tsx";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
+import {Badge} from "@/components/ui/badge.tsx";
+import {Button} from "@/components/ui/button.tsx";
+import {Card, CardContent} from "@/components/ui/card.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { ScrollArea } from "@/components/ui/scroll-area.tsx";
-import { Skeleton } from "@/components/ui/skeleton.tsx";
-import { useIsMobile } from "@/hooks/use-mobile.ts";
-import { useApiFetch } from "@/lib/fetch.ts";
-import { useAppStore } from "@/lib/store.ts";
-import type { Message, User } from "@/types.ts";
-import { MoreVertical, Plus, Search, Settings, Users } from "lucide-react";
-import { useEffect } from "react";
-import { Link, useRoute } from "wouter";
-import { navigate } from "wouter/use-browser-location";
+import {Input} from "@/components/ui/input.tsx";
+import {ScrollArea} from "@/components/ui/scroll-area.tsx";
+import {Skeleton} from "@/components/ui/skeleton.tsx";
+import {useIsMobile} from "@/hooks/use-mobile.ts";
+import {useApiFetch} from "@/lib/fetch.ts";
+import {useAppStore} from "@/lib/store.ts";
+import {limitString} from "@/lib/strings";
+import type {Conversation} from "@/types.ts";
+import {MoreVertical, Plus, Search, Settings, Users} from "lucide-react";
+import {useEffect} from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {Link, useRoute} from "wouter";
+import {navigate} from "wouter/use-browser-location";
 
 export function ChatLayout({ children }: { children?: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const { user, conversations } = useAppStore(state => state);
-  const { addConversation, getConversation, addMessage } = useAppStore.getState().conversationsActions;
+  const [match, params] = useRoute("/friends/:id");
+
+  const { conversations } = useAppStore(state => state);
+  const { addConversation } = useAppStore.getState().conversationsActions;
+
   const chats = conversations.filter(c => c.messages.length > 0)
     .map(c => ({
-      user: c.user,
+      user: c.partner,
       lastMessage: c.messages[c.messages.length - 1],
-      unreadCount: c.messages.filter(m => m.receiver.id === user!.id && !m.readAt).length,
+      unreadCount: c.unreadCount
     }))
     .sort(
       (a, b) => new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime()
     );
 
-  const [match, params] = useRoute("/friends/:username");
-  const selectedChat = chats.find(c => c.user.username === params?.username);
-
   const {
     callback: fetchChats,
     loading: loadingChats,
-  } = useApiFetch("/api/chat/list", {
-    onSuccess(res: { user: User, unreadCount: number, lastMessage: Message }[]) {
-      res.forEach(c => {
-        const conversation = getConversation(c.user.id);
-        if (conversation) {
-          if (conversation.messages.length === 0) {
-            addMessage(c.user.id, c.lastMessage);
-          }
-          return;
-        }
+  } = useApiFetch("/api/conversations", {
+    onSuccess(res: Omit<Conversation, "loaded">[]) {
+      res.forEach((c) => {
         addConversation({
-          user: c.user,
-          messages: [c.lastMessage],
-          unreadCount: c.unreadCount,
-          messagesLoaded: false
+          ...c,
+          loaded: true
         })
       })
     }
   });
 
   useEffect(() => {
-    if (chats.length !== 0) return;
-    fetchChats();
+    if (chats.length === 0) fetchChats();
   }, []);
 
   const formatTime = (date: Date) => {
@@ -126,7 +119,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link to="~/new-chat">
+                    <Link to="~/contacts">
                       <Plus className="h-4 w-4 mr-2" />
                       New Chat
                     </Link>
@@ -154,7 +147,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
 
         {/* Index List */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="p-2">
+          <div className="p-2 flex flex-col space-y-2">
             {loadingChats ? (
               // Show skeleton loaders while loading
               Array.from({ length: 6 }, (_, index) => (
@@ -170,7 +163,7 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                   Start a new conversation to see your chats here
                 </p>
                 <Button asChild>
-                  <Link to="/new-chat">
+                  <Link to="~/contacts">
                     <Plus className="h-4 w-4 mr-2" />
                     New Chat
                   </Link>
@@ -180,17 +173,17 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
               chats.map((chat) => (
                 <Card
                   key={chat.user.id}
-                  className={`mb-2 cursor-pointer transition-colors hover:bg-accent ${match && selectedChat?.user.id === chat.user.id ? "bg-accent" : ""
+                  className={`cursor-pointer transition-colors hover:bg-accent overflow-hidden ${match && Number(params?.id) === chat.user.id ? "bg-accent" : ""
                     }`}
                   onClick={() => {
-                    navigate("/chat/friends/" + chat.user.username, {
+                    navigate("/chat/friends/" + chat.user.id, {
                       replace: false
                     });
                   }}
                 >
                   <CardContent className="p-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="relative flex-shrink-0">
                         <Avatar>
                           <AvatarImage src={""} />
                           <AvatarFallback>
@@ -202,20 +195,22 @@ export function ChatLayout({ children }: { children?: React.ReactNode }) {
                             className="absolute bottom-0 right-0 w-3 h-3 bg-chart-1 rounded-full border-2 border-background" />
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium truncate">{chat.user.name}</p>
-                          <span className="text-xs text-muted-foreground">
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="font-medium truncate flex-1 min-w-0">{chat.user.name}</p>
+                          <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
                             {formatLastMessageTime(chat.lastMessage.createdAt)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-muted-foreground truncate">
-                            {chat.lastMessage.content}
-                          </p>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="text-sm text-muted-foreground truncate flex-1 min-w-0 prose dark:prose-invert">
+                            <Markdown remarkPlugins={[remarkGfm]}>
+                              {limitString(chat.lastMessage.content, 30)}
+                            </Markdown>
+                          </div>
                           {chat.unreadCount > 0 && (
-                            <Badge variant="destructive" className="text-xs">
-                              {chat.unreadCount}
+                            <Badge variant="destructive" className="text-xs flex-shrink-0">
+                              {chat.unreadCount >= 100 ? '99+' : chat.unreadCount}
                             </Badge>
                           )}
                         </div>

@@ -54,7 +54,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      * @param int $userId The ID of the user for whom to find chat partners.
      * @return User[] An array of User objects representing chat partners ordered by most recent message.
      */
-    public function findChats(int $userId): array
+    public function findChats(int $userId, int $offset, int $limit = 10): array
     {
         // Returns the list of users with whom the current user ($userId) has at least one message exchanged
         // ordered by the most recent message timestamp
@@ -74,15 +74,17 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->where('u1.id = :userId')
             ->setParameter('userId', $userId)
             ->groupBy('u2.id')
-            ->orderBy('lastMessageTime', 'DESC');
+            ->orderBy('lastMessageTime', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit);
 
         $results = $qb->getQuery()->getScalarResult();
         if (empty($results)) {
             return [];
         }
-        
+
         $userIds = array_column($results, 'id');
-        
+
         // Get the users in the same order as the sorted results
         $users = $this->createQueryBuilder('u')
             ->where('u.id IN (:ids)')
@@ -92,9 +94,9 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
         // Reorder users according to the original sort order
         $orderedUsers = [];
-        foreach ($userIds as $userId) {
+        foreach ($userIds as $id) {
             foreach ($users as $user) {
-                if ($user->getId() === (int)$userId) {
+                if ($user->getId() === (int)$id) {
                     $orderedUsers[] = $user;
                     break;
                 }

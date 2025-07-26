@@ -6,6 +6,16 @@
     {% if app.user is not null %}
         <script>
             window.user = JSON.parse('{{ app.user|serialize("json", { groups: ["user:read"] })|escape("js") }}');
+            window.mercure = {
+                messagesChannel: "{{ mercure(
+                    [
+                        "https://example.com/messages/" ~ app.user.id
+                    ],
+                    {
+                        subscribe: "https://example.com/messages/" ~ app.user.id
+                    }
+                )|escape('js') }}"
+            }
         </script>
     {% endif %}
 {% endblock %}

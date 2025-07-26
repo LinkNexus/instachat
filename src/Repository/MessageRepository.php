@@ -23,26 +23,46 @@ class MessageRepository extends ServiceEntityRepository
      * @param int $receiverId
      * @param int $limit
      * @param int $offset
-     * @return Message[] Returns an array of Message objects
+     * @return array Returns an array with 'messages' and 'total' keys
      */
     public function findAllByConversation(int $senderId, int $receiverId, int $offset = 0, int $limit = 10): array
     {
-        return $this->createQueryBuilder('m')
+        $messages = array_reverse(
+            $this->createQueryBuilder('m')
+                ->where('(m.sender = :senderId AND m.receiver = :receiverId) OR (m.receiver = :senderId AND m.sender = :receiverId)')
+                ->setParameters(new ArrayCollection([
+                    new Parameter('senderId', $senderId),
+                    new Parameter('receiverId', $receiverId)
+                ]))
+                ->setFirstResult($offset)
+                ->orderBy('m.createdAt', 'DESC')
+                ->setMaxResults($limit)
+                ->getQuery()
+                ->getResult()
+        );
+
+        return [
+            'messages' => $messages,
+            'count' => $this->findCount($senderId, $receiverId)
+        ];
+    }
+
+    public function findCount(int $senderId, int $receiverId): int
+    {
+        return (int)$this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
             ->where('(m.sender = :senderId AND m.receiver = :receiverId) OR (m.receiver = :senderId AND m.sender = :receiverId)')
             ->setParameters(new ArrayCollection([
                 new Parameter('senderId', $senderId),
                 new Parameter('receiverId', $receiverId)
             ]))
-            ->setFirstResult($offset)
-            ->orderBy('m.createdAt', 'DESC')
-            ->setMaxResults($limit)
             ->getQuery()
-            ->getResult();
+            ->getSingleScalarResult();
     }
 
     public function findUnreadMessagesCount(int $currentUserId, int $receiverId): int
     {
-        return (int) $this->createQueryBuilder('m')
+        return (int)$this->createQueryBuilder('m')
             ->select('COUNT(m.id)')
             ->where('m.sender = :receiverId AND m.receiver = :currentUserId AND m.readAt is NULL')
             ->setParameters(new ArrayCollection([
@@ -51,6 +71,20 @@ class MessageRepository extends ServiceEntityRepository
             ]))
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    public function readMessages(int $currentUserId, int $receiverId): void
+    {
+        $this->createQueryBuilder('m')
+            ->update()
+            ->set('m.readAt', 'CURRENT_TIMESTAMP()')
+            ->where('m.sender = :receiverId AND m.receiver = :currentUserId AND m.readAt is NULL')
+            ->setParameters(new ArrayCollection([
+                new Parameter('currentUserId', $currentUserId),
+                new Parameter('receiverId', $receiverId)
+            ]))
+            ->getQuery()
+            ->execute();
     }
 
     public function findLastMessage(int $senderId, int $receiverId): ?Message
@@ -68,7 +102,7 @@ class MessageRepository extends ServiceEntityRepository
     }
 
     //    /**
-    //     * @return Message[] Returns an array of Message objects
+    //     * @return MessageComponent[] Returns an array of MessageComponent objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -82,7 +116,7 @@ class MessageRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Message
+    //    public function findOneBySomeField($value): ?MessageComponent
     //    {
     //        return $this->createQueryBuilder('m')
     //            ->andWhere('m.exampleField = :val')
