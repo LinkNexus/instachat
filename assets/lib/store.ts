@@ -90,7 +90,7 @@ export const useAppStore = create(
               const conversationIndex = state.conversations.findIndex(c => c.partner.id === partnerId);
               if (conversationIndex !== -1) {
                 const updatedConversations = [...state.conversations];
-                messages.reverse().forEach(m => {
+                [...messages].reverse().forEach(m => {
                   if (!updatedConversations[conversationIndex].messages.some(existingMessage => existingMessage.id === m.id)) {
                     updatedConversations[conversationIndex].messages.unshift(m);
                   }
