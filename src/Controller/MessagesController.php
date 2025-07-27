@@ -36,11 +36,13 @@ final class MessagesController extends AbstractController
         #[MapRequestPayload] Message $message,
         #[CurrentUser] User          $user,
         #[MapQueryParameter] int     $partnerId,
-        #[MapQueryParameter] int     $repliedMessageId
+        #[MapQueryParameter] ?int    $repliedMessageId
     ): JsonResponse
     {
         $partner = $this->entityManager->getRepository(User::class)->find($partnerId);
-        $repliedMessage = $this->entityManager->getRepository(Message::class)->find($repliedMessageId);
+        $repliedMessage = $repliedMessageId !== null
+            ? $this->entityManager->getRepository(Message::class)->find($repliedMessageId)
+            : null;
 
         if (!$partner) {
             throw $this->createNotFoundException("The user was not found.");
