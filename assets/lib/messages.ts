@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import {useAppStore} from "@/lib/store.ts";
-import type {Message, MessageEvent as MessageEventType} from "@/types.ts";
+import type {MessageEvent as MessageEventType} from "@/types.ts";
 import {notify} from "@/lib/notifications.ts";
 import {useLocation} from "wouter";
 
@@ -29,7 +29,7 @@ export function useMessages() {
       document.addEventListener("visibilitychange", changeIsOnPage);
 
       eventSource.addEventListener("message", (event) => {
-        const {event: messageEvent, message} = JSON.parse(event.data) as { event: MessageEventType, message: Message };
+        const {event: messageEvent, message} = JSON.parse(event.data) as MessageEventType;
 
         if (message.sender.id === user.id) {
           return; // Ignore messages sent by the current user

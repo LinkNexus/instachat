@@ -32,3 +32,8 @@ export interface Contacts {
   groups: any[];
   loaded: boolean;
 }
+
+export interface MessageEvent {
+  event: "message.created" | "message.deleted" | "message.updated";
+  message: Message;
+}
