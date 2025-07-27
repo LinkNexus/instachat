@@ -8,7 +8,7 @@ export interface User {
 }
 
 export interface Conversation {
-  partner: Omit<User, "email" | "isVerified" | "role">;
+  user: Omit<User, "email" | "isVerified" | "role">;
   messages: Message[];
   unreadCount: number;
   count: number;
@@ -24,9 +24,8 @@ export interface Message {
   modifiedAt: string;
   readAt?: string;
   editedAt?: string;
+  repliedMessage?: Message | null;
 }
-
-export type MessageEvent = "message.created"|"message.updated"|"message.deleted";
 
 export interface Contacts {
   friends: Omit<User, "email">[];

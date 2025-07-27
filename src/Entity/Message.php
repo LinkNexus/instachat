@@ -47,6 +47,7 @@ class Message
     private ?string $content = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'relatedMessages')]
+    #[Groups(["messages:read"])]
     private ?self $repliedMessage = null;
 
     /**
@@ -139,18 +140,6 @@ class Message
         return $this;
     }
 
-    public function getRepliedMessage(): ?self
-    {
-        return $this->repliedMessage;
-    }
-
-    public function setRepliedMessage(?self $repliedMessage): static
-    {
-        $this->repliedMessage = $repliedMessage;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, self>
      */
@@ -177,6 +166,18 @@ class Message
                 $relatedMessage->setRepliedMessage(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getRepliedMessage(): ?self
+    {
+        return $this->repliedMessage;
+    }
+
+    public function setRepliedMessage(?self $repliedMessage): static
+    {
+        $this->repliedMessage = $repliedMessage;
 
         return $this;
     }

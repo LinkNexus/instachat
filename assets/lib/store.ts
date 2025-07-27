@@ -85,6 +85,26 @@ export const useAppStore = create(
               return state;
             });
           },
+          deleteMessage(messageId: number) {
+            set((state) => {
+              const updatedConversations = state.conversations.map(conversation => ({
+                ...conversation,
+                messages: conversation.messages.filter(m => m.id !== messageId)
+              }));
+              return { conversations: updatedConversations };
+            });
+          },
+          updateMessage(message: Message) {
+            set((state) => {
+              const updatedConversations = state.conversations.map(c => {
+                const messages = c.messages.map(m => {
+                  return m.id === message.id ? { ...m, ...message } : m;
+                });
+                return { ...c, messages };
+              });
+              return { conversations: updatedConversations };
+            })
+          },
           prependMessages(partnerId: number, messages: Message[]) {
             set((state) => {
               const conversationIndex = state.conversations.findIndex(c => c.partner.id === partnerId);

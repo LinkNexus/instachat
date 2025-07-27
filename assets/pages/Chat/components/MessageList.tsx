@@ -12,6 +12,7 @@ interface MessageListProps {
     onDeleteMessage: (messageId: number) => void;
     onReplyToMessage: (message: Message) => void;
     onCopyMessage: (content: string) => void;
+    onScrollToMessage?: (messageId: number) => void;
     scrollAreaRef: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -24,6 +25,7 @@ export function MessageList({
     onDeleteMessage,
     onReplyToMessage,
     onCopyMessage,
+    onScrollToMessage,
     scrollAreaRef,
 }: MessageListProps) {
     const isMyMessage = (message: Message) => message.sender.id === user.id;
@@ -49,6 +51,7 @@ export function MessageList({
                         onDelete={onDeleteMessage}
                         onReply={onReplyToMessage}
                         onCopy={onCopyMessage}
+                        onScrollToMessage={onScrollToMessage}
                         showReadStatus={true}
                     />
                 ))}
