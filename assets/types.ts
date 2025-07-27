@@ -8,7 +8,7 @@ export interface User {
 }
 
 export interface Conversation {
-  user: Omit<User, "email" | "isVerified" | "role">;
+  partner: Omit<User, "email" | "isVerified" | "role">;
   messages: Message[];
   unreadCount: number;
   count: number;
