@@ -1,4 +1,4 @@
-import {Button} from "@/components/ui/button.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,12 +6,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import {Textarea} from "@/components/ui/textarea.tsx";
-import {formatMessageTime} from "@/lib/time.ts";
-import {cn} from "@/lib/utils.ts";
-import type {Message} from "@/types.ts";
-import {Check, CheckCheck, Copy, Edit3, MoreVertical, Reply, Trash2, X} from "lucide-react";
-import {useState} from "react";
+import { Textarea } from "@/components/ui/textarea.tsx";
+import { formatMessageTime } from "@/lib/time.ts";
+import { cn } from "@/lib/utils.ts";
+import type { Message } from "@/types.ts";
+import { Check, CheckCheck, Copy, Edit3, MoreVertical, Reply, Trash2, X } from "lucide-react";
+import { useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -22,6 +22,7 @@ interface MessageComponentProps {
   onDelete?: (messageId: number) => void;
   onReply?: (message: Message) => void;
   onCopy?: (content: string) => void;
+  onScrollToMessage?: (messageId: number) => void;
   showReadStatus?: boolean;
 }
 
@@ -32,6 +33,7 @@ export function MessageComponent({
   onDelete,
   onReply,
   onCopy,
+  onScrollToMessage,
   showReadStatus = true
 }: MessageComponentProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -100,6 +102,7 @@ export function MessageComponent({
           setIsHovered(false);
         }
       }}
+      data-message-id={message.id}
     >
       {/* Quick Actions - Show on hover or when dropdown is open */}
       {shouldShowActions && (
@@ -199,6 +202,40 @@ export function MessageComponent({
         ) : (
           /* Normal Display Mode */
           <>
+            {/* Reply Preview - Show if this message is replying to another */}
+            {message.repliedMessage && (
+              <div
+                className={cn(
+                  "mb-3 p-3 rounded-lg border-l-4 text-xs transition-all cursor-pointer group",
+                  "shadow-sm hover:shadow-md",
+                  isMyMessage
+                    ? "bg-primary-foreground/10 border-primary-foreground/50 hover:bg-primary-foreground/15"
+                    : "bg-muted/80 border-muted-foreground/30 hover:bg-muted"
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onScrollToMessage?.(message.repliedMessage!.id);
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Reply className="h-3.5 w-3.5 opacity-60 group-hover:opacity-80 transition-opacity" />
+                  <span className="font-semibold text-xs opacity-90 group-hover:opacity-100 transition-opacity">
+                    {message.repliedMessage.sender.name}
+                  </span>
+                </div>
+                <div className="text-xs leading-relaxed opacity-75 group-hover:opacity-85 transition-opacity">
+                  {message.repliedMessage.content.split('\n').slice(0, 2).map((line, index) => (
+                    <p key={index} className="overflow-hidden text-ellipsis whitespace-nowrap">
+                      {line.length > 50 ? line.substring(0, 50) + "..." : line}
+                    </p>
+                  ))}
+                  {message.repliedMessage.content.split('\n').length > 2 && (
+                    <p className="opacity-60 italic">...</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="break-words prose dark:prose-invert prose-sm">
               <Markdown remarkPlugins={[remarkGfm]}>
                 {message.content}

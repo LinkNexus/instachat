@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\MessageRepository;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -44,10 +46,21 @@ class Message
     #[Assert\NotBlank]
     private ?string $content = null;
 
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'relatedMessages')]
+    #[Groups(["messages:read"])]
+    private ?self $repliedMessage = null;
+
+    /**
+     * @var Collection<int, self>
+     */
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'repliedMessage')]
+    private Collection $relatedMessages;
+
     public function __construct()
     {
         $this->createdAt = new DateTimeImmutable();
         $this->modifiedAt = new DateTimeImmutable();
+        $this->relatedMessages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -123,6 +136,48 @@ class Message
     public function setContent(string $content): static
     {
         $this->content = $content;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, self>
+     */
+    public function getRelatedMessages(): Collection
+    {
+        return $this->relatedMessages;
+    }
+
+    public function addRelatedMessage(self $relatedMessage): static
+    {
+        if (!$this->relatedMessages->contains($relatedMessage)) {
+            $this->relatedMessages->add($relatedMessage);
+            $relatedMessage->setRepliedMessage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRelatedMessage(self $relatedMessage): static
+    {
+        if ($this->relatedMessages->removeElement($relatedMessage)) {
+            // set the owning side to null (unless already changed)
+            if ($relatedMessage->getRepliedMessage() === $this) {
+                $relatedMessage->setRepliedMessage(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getRepliedMessage(): ?self
+    {
+        return $this->repliedMessage;
+    }
+
+    public function setRepliedMessage(?self $repliedMessage): static
+    {
+        $this->repliedMessage = $repliedMessage;
 
         return $this;
     }

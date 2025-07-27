@@ -24,12 +24,16 @@ export interface Message {
   modifiedAt: string;
   readAt?: string;
   editedAt?: string;
+  repliedMessage?: Message | null;
 }
-
-export type MessageEvent = "message.created"|"message.updated"|"message.deleted";
 
 export interface Contacts {
   friends: Omit<User, "email">[];
   groups: any[];
   loaded: boolean;
+}
+
+export interface MessageEvent {
+  event: "message.created" | "message.deleted" | "message.updated";
+  message: Message;
 }

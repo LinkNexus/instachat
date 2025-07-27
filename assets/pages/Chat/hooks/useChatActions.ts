@@ -1,28 +1,33 @@
-import { toast } from "sonner";
+import {toast} from "sonner";
+import {apiFetch} from "@/lib/fetch.ts";
+import {useAppStore} from "@/lib/store.ts";
+import type {Message} from "@/types.ts";
 
 export function useChatActions() {
+    const {deleteMessage, updateMessage} = useAppStore.getState().conversationsActions;
     // Message action handlers
     const handleEditMessage = async (messageId: number, newContent: string) => {
-        try {
-            // TODO: Implement API call to edit message
-            console.log("Edit message:", messageId, "New content:", newContent);
-
-            // For now, just show success message
-            toast.success("Message edited successfully");
-
-            // In a real implementation, you would:
-            // 1. Make API call to update message
-            // 2. Update the message in the store
-            // 3. Handle any errors
-        } catch (error) {
-            console.error("Failed to edit message:", error);
-            toast.error("Failed to edit message");
-        }
+        apiFetch<Message>(`/api/messages/${messageId}`, {
+            method: 'PUT',
+            data: {content: newContent},
+        })
+            .then((message) => {
+                updateMessage(message);
+                toast.success("Message edited successfully");
+            })
+            .catch(err => {
+                console.error("Failed to edit message:", err);
+                toast.error("Failed to edit message");
+            });
     };
 
     const handleDeleteMessage = (messageId: number) => {
-        // TODO: Implement delete functionality
-        console.log("Delete message:", messageId);
+        apiFetch(`/api/messages/${messageId}`, {
+            method: "DELETE"
+        }).then(() => {
+            deleteMessage(messageId)
+            toast.success("Message deleted successfully");
+        })
     };
 
     const handleCopyMessage = (_content: string) => {

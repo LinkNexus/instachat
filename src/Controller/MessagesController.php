@@ -6,6 +6,7 @@ use App\Entity\Message;
 use App\Entity\User;
 use App\Enum\MessageEventType;
 use App\Event\MessageEvent;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -24,7 +25,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class MessagesController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly EntityManagerInterface   $entityManager,
         private readonly EventDispatcherInterface $eventDispatcher,
     )
     {
@@ -34,10 +35,14 @@ final class MessagesController extends AbstractController
     public function create(
         #[MapRequestPayload] Message $message,
         #[CurrentUser] User          $user,
-        #[MapQueryParameter] ?int    $partnerId,
+        #[MapQueryParameter] int     $partnerId,
+        #[MapQueryParameter] ?int    $repliedMessageId
     ): JsonResponse
     {
         $partner = $this->entityManager->getRepository(User::class)->find($partnerId);
+        $repliedMessage = $repliedMessageId !== null
+            ? $this->entityManager->getRepository(Message::class)->find($repliedMessageId)
+            : null;
 
         if (!$partner) {
             throw $this->createNotFoundException("The user was not found.");
@@ -45,6 +50,7 @@ final class MessagesController extends AbstractController
 
         $message->setSender($user);
         $message->setReceiver($partner);
+        $message->setRepliedMessage($repliedMessage);
 
         $this->entityManager->persist($message);
         $this->entityManager->flush();
@@ -78,9 +84,9 @@ final class MessagesController extends AbstractController
 
     #[Route("/read", name: "read")]
     public function read(
-        #[CurrentUser] User $user,
+        #[CurrentUser] User       $user,
         #[MapQueryParameter] ?int $partnerId,
-        HubInterface $hub
+        HubInterface              $hub
     ): JsonResponse
     {
         $partner = $this->entityManager->getRepository(User::class)->find($partnerId);
@@ -108,6 +114,21 @@ final class MessagesController extends AbstractController
         $this->entityManager->remove($message);
         $this->entityManager->flush();
 
+        $this->eventDispatcher->dispatch(new MessageEvent($message, MessageEventType::DELETED));
+
         return $this->json(null, status: 204);
+    }
+
+    #[Route("/{id}", name: "edit", requirements: ["id" => Requirement::DIGITS], methods: ["PUT"])]
+    public function edit(
+        Message                      $message,
+        #[MapRequestPayload] Message $editedMessage,
+    ): JsonResponse
+    {
+        $message->setContent($editedMessage->getContent());
+        $message->setModifiedAt(new DateTimeImmutable());
+        $this->entityManager->flush();
+        $this->eventDispatcher->dispatch(new MessageEvent($message, MessageEventType::UPDATED));
+        return $this->json($message, context: ["groups" => ["messages:read"]]);
     }
 }

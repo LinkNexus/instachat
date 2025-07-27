@@ -1,13 +1,19 @@
 import {useEffect, useState} from "react";
 import {useAppStore} from "@/lib/store.ts";
-import type {Message, MessageEvent as MessageEventType} from "@/types.ts";
+import type {MessageEvent as MessageEventType} from "@/types.ts";
 import {notify} from "@/lib/notifications.ts";
 import {useLocation} from "wouter";
 
 export function useMessages() {
   const user = useAppStore(state => state.user);
-  const { getMessagesChannelUrl, conversationsActions } = useAppStore.getState();
-  const { addMessage, getConversation , addConversation } = conversationsActions;
+  const {getMessagesChannelUrl, conversationsActions} = useAppStore.getState();
+  const {
+    addMessage,
+    getConversation,
+    addConversation,
+    deleteMessage,
+    updateMessage
+  } = conversationsActions;
   const [location, navigate] = useLocation();
   const [isOnPage, setIsOnPage] = useState(true);
   const changeIsOnPage = () => {
@@ -23,7 +29,7 @@ export function useMessages() {
       document.addEventListener("visibilitychange", changeIsOnPage);
 
       eventSource.addEventListener("message", (event) => {
-        const {event: messageEvent, message } = JSON.parse(event.data) as { event: MessageEventType, message: Message };
+        const {event: messageEvent, message} = JSON.parse(event.data) as MessageEventType;
 
         if (message.sender.id === user.id) {
           return; // Ignore messages sent by the current user
@@ -58,6 +64,14 @@ export function useMessages() {
                 }
               });
             }
+            break;
+
+          case "message.deleted":
+            deleteMessage(message.id);
+            break;
+
+          case "message.updated":
+            updateMessage(message);
             break;
         }
       });

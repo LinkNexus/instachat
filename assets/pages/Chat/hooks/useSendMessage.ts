@@ -4,18 +4,13 @@ import {useAppStore} from "@/lib/store.ts";
 import type {Message} from "@/types.ts";
 import {toast} from "sonner";
 
-export function useSendMessage({partnerId}: { partnerId?: number }) {
+export function useSendMessage({partnerId, repliedMessage}: { partnerId?: number, repliedMessage: Message|null }) {
   const {addMessage} = useAppStore.getState().conversationsActions;
-  const url = new URL("/api/messages", location.origin);
-
-  if (partnerId) {
-    url.searchParams.append("partnerId", String(partnerId));
-  }
 
   const {
     loading: isSending,
     callback: sendMessageCallback
-  } = useApiFetch<Message, FormErrors>(url, {
+  } = useApiFetch<Message, FormErrors>(`/api/messages?partnerId=${partnerId || 0}&repliedMessageId=${repliedMessage?.id || 0}`, {
       method: "POST",
       onSuccess(message) {
         if (partnerId) {
@@ -28,7 +23,7 @@ export function useSendMessage({partnerId}: { partnerId?: number }) {
     }
   );
 
-  const sendMessage = async (content: string) => {
+  const sendMessage = async (content: string,) => {
     return sendMessageCallback({content});
   };
 
