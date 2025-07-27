@@ -96,8 +96,8 @@ export function Discussion({ params }: { params: { id: string } }) {
       fetchMessages()
         .then(async () => {
           if (conversation.unreadCount !== 0)
-            await apiFetch(`/api/messages/read?partnerId=${conversation.user.id}`)
-          switchMessagesLoaded(conversation.user.id);
+            await apiFetch(`/api/messages/read?partnerId=${conversation.partner.id}`)
+          switchMessagesLoaded(conversation.partner.id);
           scrollToBottom();
         });
     } else {
