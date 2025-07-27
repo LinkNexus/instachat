@@ -14,7 +14,7 @@ final class Version20250726221802 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Add replied_message_id column to the message table to support message replies, including a foreign key constraint and an index.';
     }
 
     public function up(Schema $schema): void
