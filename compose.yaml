@@ -21,6 +21,9 @@ services:
       - caddy_config:/config
     networks:
       - default
+    depends_on:
+      - database
+      - typesense
   
   # Mercure is installed as a Caddy module, prevent the Flex recipe from installing another service
   ###> symfony/mercure-bundle ###
@@ -46,6 +49,13 @@ services:
     networks:
       - default
 ###< doctrine/doctrine-bundle ###
+
+  typesense:
+    image: typesense/typesense:29.0
+    restart: on-failure
+    volumes:
+      - ./typesense-data:/data
+    command: '--data-dir /data --api-key=xyz --enable-cors'
 
 volumes:
   caddy_data:

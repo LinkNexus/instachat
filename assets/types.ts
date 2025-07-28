@@ -37,3 +37,11 @@ export interface MessageEvent {
   event: "message.created" | "message.deleted" | "message.updated";
   message: Message;
 }
+
+export interface FriendRequest {
+  id: number;
+  requester: Omit<User, "email"|"isVerified"|"role">;
+  targetUser: FriendRequest["requester"];
+  status: "accepted" | "pending" | "rejected" | "cancelled";
+  createdAt: string;
+}

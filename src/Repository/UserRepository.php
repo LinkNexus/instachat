@@ -106,6 +106,65 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         return $orderedUsers;
     }
 
+    /**
+     * Finds friends of a user with pagination.
+     * @param int $userId
+     * @param int $offset
+     * @param int $limit
+     * @return User[]
+     */
+    public function findFriendsPaginated(int $userId, int $offset, int $limit = 10): array
+    {
+        // Get the friends data
+        $friends = $this->createQueryBuilder("u")
+            ->innerJoin("u.friends", "f")
+            ->where("f.id = :userId")
+            ->setParameter("userId", $userId)
+            ->orderBy("u.username", "ASC")
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        // Get the total count separately
+        $count = $this->createQueryBuilder("u")
+            ->select("COUNT(u.id)")
+            ->innerJoin("u.friends", "f")
+            ->where("f.id = :userId")
+            ->setParameter("userId", $userId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            "friends" => $friends,
+            "count" => $count
+        ];
+    }
+
+    public function findByQuery(string $query, int $offset, int $limit = 10): array
+    {
+        $qb = $this->createQueryBuilder('u');
+
+        $count = $qb->select('COUNT(u.id)')
+            ->where('u.username LIKE :query OR u.email LIKE :query')
+            ->setParameter('query', "%$query%")
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $results = $qb->select('u')
+            ->where('u.username LIKE :query OR u.email LIKE :query')
+            ->setParameter('query', "%$query%")
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        return [
+            "count" => (int)$count,
+            "results" => $results
+        ];
+    }
+
     //    /**
     //     * @return User[] Returns an array of User objects
     //     */

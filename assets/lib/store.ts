@@ -1,6 +1,6 @@
 import {env} from "@/lib/env.ts";
 import {apiFetch} from "@/lib/fetch.ts";
-import type {Contacts, Conversation, Message, User} from '@/types';
+import type {Contacts, Conversation, FriendRequest, Message, User} from '@/types';
 import {create} from 'zustand';
 import {combine, persist} from 'zustand/middleware';
 
@@ -17,7 +17,13 @@ export const useAppStore = create(
           friends: [],
           groups: [],
           loaded: false
-        } as Contacts
+        } as Contacts,
+        friendships: {
+          friends: [] as User[],
+          requests: [] as FriendRequest[],
+          friendsCount: 0,
+          loaded: false
+        }
       },
       (set, get) => ({
         setUser: (user: User | undefined) => set({ user }),
@@ -130,6 +136,42 @@ export const useAppStore = create(
               }
               return state;
             });
+          }
+        },
+        friendsActions: {
+          addFriend(friend: User) {
+            set(state => {
+              if (state.friendships.friends?.some(f => f.id === friend.id)) {
+                return state; // Friend already exists
+              }
+              return {
+                friendships: {
+                  ...state.friendships,
+                  friends: [...state.friendships.friends, friend]
+                }
+              }
+            })
+          },
+          alterFriendsCount(count: number = 1) {
+            set(state => ({
+              friendships: {
+                ...state.friendships,
+                friendsCount: state.friendships.friendsCount + count
+              }
+            }));
+          },
+          addRequest(request: FriendRequest) {
+            set(state => {
+              if (state.friendships.requests.some(r => r.id === request.id)) {
+                return state; // Request already exists
+              }
+              return {
+                friendships: {
+                  ...state.friendships,
+                  requests: [...state.friendships.requests, request]
+                }
+              }
+            })
           }
         }
       })

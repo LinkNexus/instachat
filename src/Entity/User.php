@@ -20,7 +20,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["user:read", "users:read", "messages:read"])]
+    #[Groups(["user:read", "users:read", "messages:read", "friend_requests:read"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
@@ -32,7 +32,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var list<string> The user roles
      */
     #[ORM\Column]
-    #[Groups(["user:read", "users:read"])]
+    #[Groups(["user:read"])]
     private array $roles = [];
 
     /**
@@ -46,7 +46,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["user:read", "users:read", "messages:read"])]
+    #[Groups(["user:read", "users:read", "messages:read", "friend_requests:read"])]
     #[Assert\Sequentially([
         new Assert\Length(min: 3, max: 255, minMessage: "The name must be at least {{ limit }} characters long", maxMessage: "The name must be at most {{ limit }} characters long"),
         new Assert\Regex(pattern: "/^[a-zA-Z0-9_ ]+$/", message: "The name can only contain letters, numbers, spaces and underscores.")
@@ -62,7 +62,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         new Assert\Length(min: 3, max: 255, minMessage: "The username must be at least {{ limit }} characters long", maxMessage: "The username must be at most {{ limit }} characters long"),
         new Assert\Regex(pattern: "/^[a-zA-Z0-9_]+$/", message: "The username can only contain letters, numbers and underscores.")
     ])]
-    #[Groups(["user:read", "users:read", "messages:read"])]
+    #[Groups(["user:read", "users:read", "messages:read", "friend_requests:read"])]
     private ?string $username = null;
 
     #[ORM\Column(length: 200, nullable: true)]
@@ -79,9 +79,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     private Collection $friends;
 
+    /**
+     * @var Collection<int, FriendRequest>
+     */
+    #[ORM\OneToMany(targetEntity: FriendRequest::class, mappedBy: 'requester', orphanRemoval: true)]
+    private Collection $friendRequests;
+
     public function __construct()
     {
         $this->friends = new ArrayCollection();
+        $this->friendRequests = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -233,6 +240,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeFriend(self $friend): static
     {
         $this->friends->removeElement($friend);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FriendRequest>
+     */
+    public function getFriendRequests(): Collection
+    {
+        return $this->friendRequests;
+    }
+
+    public function addFriendRequest(FriendRequest $friendRequest): static
+    {
+        if (!$this->friendRequests->contains($friendRequest)) {
+            $this->friendRequests->add($friendRequest);
+            $friendRequest->setRequester($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFriendRequest(FriendRequest $friendRequest): static
+    {
+        if ($this->friendRequests->removeElement($friendRequest)) {
+            // set the owning side to null (unless already changed)
+            if ($friendRequest->getRequester() === $this) {
+                $friendRequest->setRequester(null);
+            }
+        }
 
         return $this;
     }
