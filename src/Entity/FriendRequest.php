@@ -32,7 +32,7 @@ class FriendRequest
     private ?User $targetUser = null;
 
     #[ORM\Column]
-    private ?DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt;
 
     public function __construct()
     {

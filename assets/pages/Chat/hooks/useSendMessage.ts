@@ -10,7 +10,7 @@ export function useSendMessage({partnerId, repliedMessage}: { partnerId?: number
   const {
     loading: isSending,
     callback: sendMessageCallback
-  } = useApiFetch<Message, FormErrors>(`/api/messages?partnerId=${partnerId || 0}&repliedMessageId=${repliedMessage?.id || 0}`, {
+  } = useApiFetch<Message, FormErrors>(`/api/messages`, {
       method: "POST",
       onSuccess(message) {
         if (partnerId) {
@@ -24,7 +24,13 @@ export function useSendMessage({partnerId, repliedMessage}: { partnerId?: number
   );
 
   const sendMessage = async (content: string,) => {
-    return sendMessageCallback({content});
+    return sendMessageCallback({
+      data: { content },
+      searchParams: {
+        partnerId: partnerId || 0,
+        repliedMessageId: repliedMessage?.id || 0,
+      }
+    });
   };
 
   return {

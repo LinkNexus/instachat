@@ -7,14 +7,14 @@ interface ApiFetchOptions extends Omit<RequestInit, "body"> {
 }
 
 export async function apiFetch<T>(
-  url: string|URL,
+  url: string | URL,
   options: ApiFetchOptions = {
     data: null,
     contentType: "json",
     accept: "json",
   }
 ) {
-  const {data = null, contentType = "json", accept = "json"} = options;
+  const { data = null, contentType = "json", accept = "json" } = options;
   let headers: Record<string, string> = {};
 
   if (data && !(data instanceof FormData) && contentType === "json")
@@ -65,12 +65,12 @@ export class ApiError<T> extends Error {
 
 interface UseApiFetchOptions<T, S> extends ApiFetchOptions {
   onError?: (error: ApiError<S>) => void;
-  onSuccess?: (data: T) => void|Promise<void>;
+  onSuccess?: (data: T) => void | Promise<void>;
   finally?: () => void;
 }
 
 export function useApiFetch<T, S>(
-  url: string|URL,
+  url: string | URL,
   options: UseApiFetchOptions<T, S> = {
     contentType: "json",
     accept: "json",
@@ -82,36 +82,62 @@ export function useApiFetch<T, S>(
   const [loading, setLoading] = useState<boolean>(false);
   const { onError, onSuccess, ...restOptions } = options;
 
-  const fetchData = useCallback(async (data: ApiFetchOptions["data"] = options.data) => {
-    if (loading) return; // Prevent multiple concurrent requests
+  const fetchData = useCallback(
+    async (params: {
+      data?: ApiFetchOptions["data"];
+      searchParams?: Record<string, (string|number)|(string | number)[]>;
+    } = {
+      data: options.data,
+      searchParams: {}
+    }) => {
+      if (loading) return; // Prevent multiple concurrent requests
+      const { data, searchParams } = params;
 
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const res = await apiFetch<T>(url, {
-        ...restOptions,
-        data
-      });
-      setData(res);
-      await onSuccess?.(res);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err);
-        onError?.(err);
-      } else {
-        console.error("Unexpected error:", err);
-        throw err; // Re-throw unexpected errors
+      if (!(url instanceof URL)) {
+        url = new URL(url, window.location.origin);
       }
-    } finally {
-      setLoading(false);
-      options.finally?.();
-    }
-  }, [url, loading, ...deps]);
+
+      // Append search parameters to the URL
+      if (searchParams && Object.keys(searchParams).length > 0) {
+        const urlSearchParams = new URLSearchParams();
+        for (const [key, values] of Object.entries(searchParams)) {
+          if (Array.isArray(values)) {
+            values.forEach(value => urlSearchParams.append(key, String(value)));
+          } else {
+            urlSearchParams.set(key, String(values));
+          }
+        }
+        url.search = urlSearchParams.toString();
+      }
+
+      try {
+        const res = await apiFetch<T>(url, {
+          ...restOptions,
+          data,
+        });
+        setData(res);
+        await onSuccess?.(res);
+      } catch (err) {
+        if (err instanceof ApiError) {
+          setError(err);
+          onError?.(err);
+        } else {
+          console.error("Unexpected error:", err);
+          throw err; // Re-throw unexpected errors
+        }
+      } finally {
+        setLoading(false);
+        options.finally?.();
+      }
+    },
+    [url, loading, ...deps]
+  );
 
   return {
-    data,
-    error,
+    data, error,
     loading,
     callback: fetchData
   };

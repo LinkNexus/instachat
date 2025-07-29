@@ -1,6 +1,6 @@
 import {env} from "@/lib/env.ts";
 import {apiFetch} from "@/lib/fetch.ts";
-import type {Contacts, Conversation, FriendRequest, Message, User} from '@/types';
+import type {Contacts, Conversation, FriendRequest, FriendRequestCategory, Message, User} from '@/types';
 import {create} from 'zustand';
 import {combine, persist} from 'zustand/middleware';
 
@@ -19,18 +19,34 @@ export const useAppStore = create(
           loaded: false
         } as Contacts,
         friendships: {
-          friends: [] as User[],
-          requests: [] as FriendRequest[],
-          friendsCount: 0,
-          loaded: false
+          "accepted": {
+            count: 0,
+            requests: [] as FriendRequest[],
+            loaded: false
+          },
+          "pending": {
+            count: 0,
+            requests: [] as FriendRequest[],
+            loaded: false
+          },
+          "sent": {
+            count: 0,
+            requests: [] as FriendRequest[],
+            loaded: false
+          }
+        } satisfies Record<FriendRequestCategory, {
+          count: number,
+          requests: FriendRequest[],
+          loaded: boolean
         }
+        >,
       },
       (set, get) => ({
-        setUser: (user: User | undefined) => set({ user }),
-        setTheme: (theme: Theme) => set({ theme }),
+        setUser: (user: User | undefined) => set({user}),
+        setTheme: (theme: Theme) => set({theme}),
         logout: () => {
           apiFetch("/api/auth/logout")
-            .then(() => set({ user: undefined }))
+            .then(() => set({user: undefined}))
         },
         getMessagesChannelUrl() {
           if (window.mercure?.messagesChannel) {
@@ -44,14 +60,14 @@ export const useAppStore = create(
           addContacts(contacts: Contacts) {
             set((state) => {
               if (state.contacts.loaded) return state; // Contacts already loaded
-              return { contacts: { ...state.contacts, ...contacts, loaded: true } };
+              return {contacts: {...state.contacts, ...contacts, loaded: true}};
             });
-          } ,
+          },
           addConversation: (conversation: Conversation) => set((state) => {
             if (state.conversations.some(c => c.partner.id === conversation.partner.id)) {
               return state; // Conversation already exists
             }
-            return { conversations: [...state.conversations, conversation] };
+            return {conversations: [...state.conversations, conversation]};
           }),
           getConversation: (partnerId: number) => {
             return get().conversations.find(c => c.partner.id === partnerId);
@@ -66,7 +82,7 @@ export const useAppStore = create(
                   if (!m.readAt) m.readAt = time;
                 });
                 updatedConversations[conversationIndex].unreadCount = 0;
-                return { conversations: updatedConversations };
+                return {conversations: updatedConversations};
               }
               return state;
             });
@@ -82,11 +98,11 @@ export const useAppStore = create(
                 if (message.sender.id !== state.user?.id) {
                   updatedConversations[conversationIndex].unreadCount += 1;
                   document.dispatchEvent(new CustomEvent("new.message", {
-                    detail: { message },
+                    detail: {message},
                     bubbles: true,
                   }))
                 }
-                return { conversations: updatedConversations };
+                return {conversations: updatedConversations};
               }
               return state;
             });
@@ -97,18 +113,18 @@ export const useAppStore = create(
                 ...conversation,
                 messages: conversation.messages.filter(m => m.id !== messageId)
               }));
-              return { conversations: updatedConversations };
+              return {conversations: updatedConversations};
             });
           },
           updateMessage(message: Message) {
             set((state) => {
               const updatedConversations = state.conversations.map(c => {
                 const messages = c.messages.map(m => {
-                  return m.id === message.id ? { ...m, ...message } : m;
+                  return m.id === message.id ? {...m, ...message} : m;
                 });
-                return { ...c, messages };
+                return {...c, messages};
               });
-              return { conversations: updatedConversations };
+              return {conversations: updatedConversations};
             })
           },
           prependMessages(partnerId: number, messages: Message[]) {
@@ -121,7 +137,7 @@ export const useAppStore = create(
                     updatedConversations[conversationIndex].messages.unshift(m);
                   }
                 })
-                return { conversations: updatedConversations };
+                return {conversations: updatedConversations};
               }
               return state;
             });
@@ -132,46 +148,59 @@ export const useAppStore = create(
               if (conversationIndex !== -1) {
                 const updatedConversations = [...state.conversations];
                 updatedConversations[conversationIndex].loaded = true;
-                return { conversations: updatedConversations };
+                return {conversations: updatedConversations};
               }
               return state;
             });
           }
         },
         friendsActions: {
-          addFriend(friend: User) {
+          addRequest(category: FriendRequestCategory, request: FriendRequest) {
             set(state => {
-              if (state.friendships.friends?.some(f => f.id === friend.id)) {
-                return state; // Friend already exists
-              }
-              return {
-                friendships: {
-                  ...state.friendships,
-                  friends: [...state.friendships.friends, friend]
-                }
-              }
-            })
-          },
-          alterFriendsCount(count: number = 1) {
-            set(state => ({
-              friendships: {
-                ...state.friendships,
-                friendsCount: state.friendships.friendsCount + count
-              }
-            }));
-          },
-          addRequest(request: FriendRequest) {
-            set(state => {
-              if (state.friendships.requests.some(r => r.id === request.id)) {
+              const currentCategory = state.friendships[category];
+              if (currentCategory.requests.some((r) => r.id === request.id)) {
                 return state; // Request already exists
               }
               return {
                 friendships: {
                   ...state.friendships,
-                  requests: [...state.friendships.requests, request]
+                  [category]: {
+                    ...currentCategory,
+                    requests: [...currentCategory.requests, request],
+                    loaded: true
+                  }
                 }
-              }
+              };
             })
+          },
+          alterRequestsCount(category: FriendRequestCategory, count: number) {
+            set(state => {
+              const currentCategory = state.friendships[category];
+              return {
+                friendships: {
+                  ...state.friendships,
+                  [category]: {
+                    ...currentCategory,
+                    count: currentCategory.count + count,
+                    loaded: true
+                  }
+                }
+              };
+            });
+          },
+          switchRequestsLoaded(category: FriendRequestCategory) {
+            set(state => {
+              const currentCategory = state.friendships[category];
+              return {
+                friendships: {
+                  ...state.friendships,
+                  [category]: {
+                    ...currentCategory,
+                    loaded: true
+                  }
+                }
+              };
+            });
           }
         }
       })

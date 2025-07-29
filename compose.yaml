@@ -23,7 +23,6 @@ services:
       - default
     depends_on:
       - database
-      - typesense
   
   # Mercure is installed as a Caddy module, prevent the Flex recipe from installing another service
   ###> symfony/mercure-bundle ###
@@ -44,18 +43,11 @@ services:
       start_period: 60s
     volumes:
       - database_data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
+    # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+    # - ./docker/db/data:/var/lib/postgresql/data:rw
     networks:
       - default
-###< doctrine/doctrine-bundle ###
-
-  typesense:
-    image: typesense/typesense:29.0
-    restart: on-failure
-    volumes:
-      - ./typesense-data:/data
-    command: '--data-dir /data --api-key=xyz --enable-cors'
+  ###< doctrine/doctrine-bundle ###
 
 volumes:
   caddy_data:
@@ -65,7 +57,7 @@ volumes:
   
   ###> doctrine/doctrine-bundle ###
   database_data:
-###< doctrine/doctrine-bundle ###
+  ###< doctrine/doctrine-bundle ###
 
 networks:
   default:

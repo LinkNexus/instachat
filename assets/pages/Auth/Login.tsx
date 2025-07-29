@@ -57,7 +57,9 @@ export function Login() {
         <CardContent>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(login)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(async (values) => {
+              await login({ data: values })
+            })} className="space-y-4">
               <FormField
                 control={form.control}
                 name="identifier"

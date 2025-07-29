@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\FriendRequest;
+use App\Enum\FriendRequestStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Query\Parameter;
@@ -39,6 +40,41 @@ class FriendRequestRepository extends ServiceEntityRepository
             ]))
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    public function findAcceptedRequests(
+        $userId,
+        int $offset = 0,
+        int $limit = 10
+    ): array
+    {
+        $qb = $this->createQueryBuilder('f');
+        $params = new ArrayCollection([
+            new Parameter('status', FriendRequestStatus::ACCEPTED),
+            new Parameter('userId', $userId),
+        ]);
+
+        $count = $qb
+            ->select('COUNT(f.id)')
+            ->andWhere("f.status = :status AND (f.requester = :userId OR f.targetUser = :userId)")
+            ->setParameters($params)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $results = $qb
+            ->select("f")
+            ->andWhere("f.status = :status AND (f.requester = :userId OR f.targetUser = :userId)")
+            ->setParameters($params)
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->orderBy('f.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return [
+            "count" => (int)$count,
+            "results" => $results
+        ];
     }
 
     //    /**

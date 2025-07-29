@@ -1,130 +1,48 @@
-import {AddFriendModal} from "@/components/AddFriendModal.tsx";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import {Index} from "@/pages/Friends/components/AddFriendModal";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {Card, CardContent} from "@/components/ui/card";
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu";
 import {Input} from "@/components/ui/input";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {useApiFetch} from "@/lib/fetch.ts";
 import {useAppStore} from "@/lib/store.ts";
-import {FriendsListSkeleton} from "@/pages/Friends/ListSkeleton.tsx";
-import type {User} from "@/types.ts";
-import {MessageSquare, MoreVertical, Phone, Search, Settings, UserPlus, UserX, Video} from "lucide-react";
-import {useEffect} from "react";
-
-interface Friend {
-  id: string;
-  name: string;
-  username: string;
-  avatar?: string;
-  isOnline: boolean;
-  lastSeen?: Date;
-  mutualFriends: number;
-}
-
-interface FriendRequest {
-  id: string;
-  name: string;
-  username: string;
-  avatar?: string;
-  mutualFriends: number;
-  sentAt: Date;
-  type: 'sent' | 'received';
-}
-
-const mockFriends: Friend[] = [
-  {
-    id: "1",
-    name: "Alice Johnson",
-    username: "alice_j",
-    avatar: "https://github.com/shadcn.png",
-    isOnline: true,
-    mutualFriends: 12,
-  },
-  {
-    id: "2",
-    name: "Bob Smith",
-    username: "bob_smith",
-    isOnline: false,
-    lastSeen: new Date(Date.now() - 3600000),
-    mutualFriends: 8,
-  },
-  {
-    id: "3",
-    name: "Carol White",
-    username: "carol_w",
-    isOnline: true,
-    mutualFriends: 15,
-  },
-  {
-    id: "4",
-    name: "David Brown",
-    username: "david_b",
-    isOnline: false,
-    lastSeen: new Date(Date.now() - 86400000),
-    mutualFriends: 5,
-  },
-];
-
-const mockPendingRequests: FriendRequest[] = [
-  {
-    id: "1",
-    name: "Emma Wilson",
-    username: "emma_w",
-    avatar: "https://github.com/shadcn.png",
-    mutualFriends: 3,
-    sentAt: new Date(Date.now() - 3600000),
-    type: 'received',
-  },
-  {
-    id: "2",
-    name: "James Miller",
-    username: "james_m",
-    mutualFriends: 7,
-    sentAt: new Date(Date.now() - 7200000),
-    type: 'sent',
-  },
-  {
-    id: "3",
-    name: "Sarah Davis",
-    username: "sarah_d",
-    mutualFriends: 2,
-    sentAt: new Date(Date.now() - 86400000),
-    type: 'received',
-  },
-];
+import {FriendsListSkeleton} from "@/pages/Friends/components/ListSkeleton.tsx";
+import type {FriendRequest, FriendRequestCategory} from "@/types.ts";
+import {Search, Settings, UserPlus} from "lucide-react";
+import {useEffect, useState} from "react";
+import {FriendsTabs} from "@/pages/Friends/components/Tabs/FriendsTabs.tsx";
 
 export function Friends() {
-  const { friends, loaded, friendsCount } = useAppStore(state => state)
-    .friendships;
-  const { addFriend, alterFriendsCount } = useAppStore.getState().friendsActions;
+  const {accepted} = useAppStore(state => state.friendships);
+  const { addRequest, alterRequestsCount, switchRequestsLoaded } = useAppStore.getState().friendsActions;
+  const [currentCategory, setCurrentCategory] = useState<FriendRequestCategory>("accepted");
 
-  const { callback: fetchFriends } = useApiFetch(`/api/friends?offset=0`, {
+  const { callback: fetchRequests } = useApiFetch("/api/friend-requests", {
     method: "GET",
-    onSuccess(res: { friends: User[], count: number }) {
-      res.friends.forEach(addFriend);
-      alterFriendsCount(res.count);
+    onSuccess(res: {
+      requests: FriendRequest[];
+      count: number
+    }) {
+      res.requests.forEach(request => {
+        addRequest(currentCategory, request);
+        alterRequestsCount(currentCategory, res.count);
+        switchRequestsLoaded(currentCategory);
+      })
     }
-  });
+  }, [currentCategory]);
 
   useEffect(() => {
-    if (loaded) {
-      fetchFriends();
+    switch (currentCategory) {
+      case "accepted":
+        if (!accepted.loaded) {
+          fetchRequests({
+            searchParams: { category: "accepted" }
+          });
+        }
+        break;
     }
-  }, []);
+  }, [currentCategory]);
 
   const formatLastSeen = (date: Date) => {
     const now = new Date();
@@ -166,19 +84,23 @@ export function Friends() {
                 className="pl-10"
               />
             </div>
-            <AddFriendModal>
+            <Index>
               <Button className="shrink-0">
                 <UserPlus className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Add Friend</span>
               </Button>
-            </AddFriendModal>
+            </Index>
           </div>
         </div>
 
-        <Tabs defaultValue="all-friends" className="w-full">
+        <Tabs
+          value={currentCategory}
+          onValueChange={(val) => setCurrentCategory(val as FriendRequestCategory)}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="all-friends" className="text-xs sm:text-sm">
-              All Friends ({friendsCount})
+            <TabsTrigger value="accepted" className="text-xs sm:text-sm">
+              All Friends (0)
             </TabsTrigger>
             <TabsTrigger value="pending" className="text-xs sm:text-sm">
               Pending
@@ -188,104 +110,9 @@ export function Friends() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all-friends" className="mt-6">
-            {friends ? (
-              <ScrollArea className="h-[calc(100vh-300px)]">
-                <div className="grid gap-4">
-                  {friends.map((friend) => (
-                    <Card key={friend.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="relative">
-                              <Avatar className="h-12 w-12">
-                                <AvatarImage src={""} />
-                                <AvatarFallback>
-                                  {friend.name.split(' ').map(n => n[0]).join('')}
-                                </AvatarFallback>
-                              </Avatar>
-                              {true && (
-                                <div
-                                  className="absolute bottom-0 right-0 w-3 h-3 bg-chart-1 rounded-full border-2 border-background" />
-                              )}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold">{friend.name}</h3>
-                              <p className="text-sm text-muted-foreground">@{friend.username}</p>
-                              <div className="flex items-center space-x-4 mt-1">
-                                <span className="text-xs text-muted-foreground">
-                                  {true ? (
-                                    <Badge variant="secondary"
-                                      className="text-xs">Online</Badge>
-                                  ) : (
-                                    `Last seen ${formatLastSeen(new Date())}`
-                                  )}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  0 mutual friends
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="icon">
-                              <MessageSquare className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="icon">
-                              <Phone className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="icon">
-                              <Video className="h-4 w-4" />
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>View Profile</DropdownMenuItem>
-                                <DropdownMenuItem>Block</DropdownMenuItem>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                      <UserX className="h-4 w-4 mr-2" />
-                                      Remove Friend
-                                    </DropdownMenuItem>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Remove Friend</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Are you sure you want to remove {friend.name} from your friends list?
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction>
-                                        Remove
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {friends.length === 0 && (
-                    <div className="text-center py-12">
-                      <UserPlus className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No friends found</h3>
-                      <p className="text-muted-foreground">
-                        {null ? "Try adjusting your search" : "Start by adding some friends!"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+          <TabsContent value="accepted" className="mt-6">
+            {accepted.count > 0 ? (
+              <FriendsTabs {...accepted} />
             ) : (
               <FriendsListSkeleton />
             )}

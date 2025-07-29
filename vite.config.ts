@@ -25,7 +25,7 @@ export default defineConfig({
       credentials: true
     },
     hmr: {
-      host: new URL(process.env.VITE_SITE_NAME).hostname,
+      host: new URL(process.env.VITE_SITE_NAME!).hostname,
     }
   },
   resolve: {

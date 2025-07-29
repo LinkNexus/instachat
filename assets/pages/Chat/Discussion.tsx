@@ -11,9 +11,9 @@ import {useChatActions} from "./hooks/useChatActions.ts";
 import {useChatData} from "./hooks/useChatData.ts";
 import {useSendMessage} from "./hooks/useSendMessage.ts";
 
-export function Discussion({ params }: { params: { id: string } }) {
-  const { user } = useAppStore(state => state);
-  const { switchMessagesLoaded } = useAppStore.getState().conversationsActions;
+export function Discussion({params}: { params: { id: string } }) {
+  const {user} = useAppStore(state => state);
+  const {switchMessagesLoaded} = useAppStore.getState().conversationsActions;
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
@@ -25,6 +25,7 @@ export function Discussion({ params }: { params: { id: string } }) {
     fetchMessages,
     isLoadingConversation,
     isLoadingMessages,
+    readMessagesRequest
   } = useChatData({
     partnerId: Number(params.id),
   });
@@ -35,7 +36,7 @@ export function Discussion({ params }: { params: { id: string } }) {
     handleCopyMessage,
   } = useChatActions();
 
-  const { sendMessage, isSending } = useSendMessage({
+  const {sendMessage, isSending} = useSendMessage({
     partnerId: Number(params.id),
     repliedMessage: replyToMessage
   });
@@ -96,11 +97,13 @@ export function Discussion({ params }: { params: { id: string } }) {
       fetchMessages()
         .then(async () => {
           if (conversation.unreadCount !== 0)
-            await apiFetch(`/api/messages/read?partnerId=${conversation.partner.id}`)
+            await readMessagesRequest();
           switchMessagesLoaded(conversation.partner.id);
           scrollToBottom();
         });
     } else {
+      if (conversation.unreadCount !== 0)
+        readMessagesRequest();
       scrollToBottom();
     }
 
@@ -113,18 +116,18 @@ export function Discussion({ params }: { params: { id: string } }) {
 
   // Render loading state
   if (isLoadingConversation) {
-    return <DiscussionSkeleton />;
+    return <DiscussionSkeleton/>;
   }
 
   // Render not found state
   if (!conversation) {
-    return <ConversationNotFound />;
+    return <ConversationNotFound/>;
   }
 
   // Render main chat interface
   return (
     <>
-      <ChatHeader conversation={conversation} />
+      <ChatHeader conversation={conversation}/>
 
       <MessageList
         messages={messages}

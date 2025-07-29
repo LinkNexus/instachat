@@ -42,6 +42,8 @@ export interface FriendRequest {
   id: number;
   requester: Omit<User, "email"|"isVerified"|"role">;
   targetUser: FriendRequest["requester"];
-  status: "accepted" | "pending" | "rejected" | "cancelled";
+  status: "accepted" | "pending";
   createdAt: string;
 }
+
+export type FriendRequestCategory = "accepted" | "pending" | "sent";

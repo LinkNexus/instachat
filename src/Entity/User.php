@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use DateTimeImmutable;
 use Deprecated;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -70,25 +71,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $bio = null;
 
     /**
-     * @var Collection<int, self>
-     */
-    #[ORM\ManyToMany(targetEntity: self::class)]
-    #[ORM\JoinTable(name: 'friendships',
-        joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')],
-        inverseJoinColumns: [new ORM\JoinColumn(name: 'friend_id', referencedColumnName: 'id')]
-    )]
-    private Collection $friends;
-
-    /**
      * @var Collection<int, FriendRequest>
      */
     #[ORM\OneToMany(targetEntity: FriendRequest::class, mappedBy: 'requester', orphanRemoval: true)]
     private Collection $friendRequests;
 
+    #[ORM\Column]
+    #[Groups(["user:read", "users:read", "messages:read", "friend_requests:read"])]
+    private ?DateTimeImmutable $joinedAt = null;
+
     public function __construct()
     {
-        $this->friends = new ArrayCollection();
         $this->friendRequests = new ArrayCollection();
+        $this->joinedAt = new DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -221,30 +216,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, self>
-     */
-    public function getFriends(): Collection
-    {
-        return $this->friends;
-    }
-
-    public function addFriend(self $friend): static
-    {
-        if (!$this->friends->contains($friend)) {
-            $this->friends->add($friend);
-        }
-
-        return $this;
-    }
-
-    public function removeFriend(self $friend): static
-    {
-        $this->friends->removeElement($friend);
-
-        return $this;
-    }
-
-    /**
      * @return Collection<int, FriendRequest>
      */
     public function getFriendRequests(): Collection
@@ -270,6 +241,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $friendRequest->setRequester(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getJoinedAt(): ?DateTimeImmutable
+    {
+        return $this->joinedAt;
+    }
+
+    public function setJoinedAt(DateTimeImmutable $joinedAt): static
+    {
+        $this->joinedAt = $joinedAt;
 
         return $this;
     }

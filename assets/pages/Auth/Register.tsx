@@ -77,7 +77,9 @@ export function Register() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(register)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(async (values) => {
+              await register({ data: values });
+            })} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"

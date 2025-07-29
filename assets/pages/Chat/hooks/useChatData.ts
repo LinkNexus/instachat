@@ -45,6 +45,16 @@ export function useChatData({partnerId}: { partnerId?: number }) {
     }
   }, [partnerId, messages.length]);
 
+  const {
+    callback: readMessagesRequest
+  } = useApiFetch(`/api/messages/read?partnerId=${partnerId}`, {
+    onSuccess() {
+      if (conversation) {
+        readMessages(conversation.partner.id);
+      }
+    }
+  }, [partnerId]);
+
   return {
     conversation,
     messages,
@@ -52,5 +62,6 @@ export function useChatData({partnerId}: { partnerId?: number }) {
     fetchMessages,
     isLoadingConversation,
     isLoadingMessages,
+    readMessagesRequest
   };
 }

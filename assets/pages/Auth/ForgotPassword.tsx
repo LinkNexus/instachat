@@ -48,7 +48,9 @@ export function ForgotPassword() {
 
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(sendResetLink)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(async (values) => {
+              await sendResetLink({ data: values });
+            })} className="space-y-4">
               <FormField
                 control={form.control}
                 name="identifier"

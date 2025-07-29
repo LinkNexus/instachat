@@ -107,52 +107,25 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
-     * Finds friends of a user with pagination.
-     * @param int $userId
-     * @param int $offset
-     * @param int $limit
-     * @return User[]
+     * Finds users by a search query with pagination.
+     *
+     * @param string $query The search query to match against usernames or names.
+     * @param int $offset The offset for pagination.
+     * @param int $limit The maximum number of results to return.
+     * @return array{count: int, results: User[]} An array containing the count of matching users and the results.
      */
-    public function findFriendsPaginated(int $userId, int $offset, int $limit = 10): array
-    {
-        // Get the friends data
-        $friends = $this->createQueryBuilder("u")
-            ->innerJoin("u.friends", "f")
-            ->where("f.id = :userId")
-            ->setParameter("userId", $userId)
-            ->orderBy("u.username", "ASC")
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
-
-        // Get the total count separately
-        $count = $this->createQueryBuilder("u")
-            ->select("COUNT(u.id)")
-            ->innerJoin("u.friends", "f")
-            ->where("f.id = :userId")
-            ->setParameter("userId", $userId)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        return [
-            "friends" => $friends,
-            "count" => $count
-        ];
-    }
-
     public function findByQuery(string $query, int $offset, int $limit = 10): array
     {
-        $qb = $this->createQueryBuilder('u');
-
-        $count = $qb->select('COUNT(u.id)')
-            ->where('u.username LIKE :query OR u.email LIKE :query')
+        $countQb = $this->createQueryBuilder('u');
+        $count = $countQb->select('COUNT(u.id)')
+            ->where('u.username LIKE :query OR u.name LIKE :query')
             ->setParameter('query', "%$query%")
             ->getQuery()
             ->getSingleScalarResult();
 
+        $qb = $this->createQueryBuilder('u');
         $results = $qb->select('u')
-            ->where('u.username LIKE :query OR u.email LIKE :query')
+            ->where('u.username LIKE :query OR u.name LIKE :query')
             ->setParameter('query', "%$query%")
             ->setFirstResult($offset)
             ->setMaxResults($limit)

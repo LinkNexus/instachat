@@ -70,7 +70,9 @@ export function ResetPassword() {
 
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(resetPassword)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(async (values) => {
+            await resetPassword({ data: values });
+          })} className="space-y-4">
             <FormField
               control={form.control}
               name="password"
