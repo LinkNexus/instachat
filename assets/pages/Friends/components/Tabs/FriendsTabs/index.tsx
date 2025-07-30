@@ -13,7 +13,7 @@ export function FriendsTabs({requests, isFetching, count}: TabsProps) {
         {requests.map((request) => (
           <FriendCard key={request.id} request={request} user={user!}/>
         ))}
-        {count === 0 && (
+        {!isFetching && count === 0 && (
           <div className="text-center py-12">
             <UserPlus className="h-16 w-16 mx-auto text-muted-foreground mb-4"/>
             <h3 className="text-lg font-semibold mb-2">No friends found</h3>

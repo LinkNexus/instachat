@@ -9,9 +9,12 @@ export function PendingRequestsTab({ requests, count, isFetching }: TabsProps) {
     <ScrollArea className="h-[calc(100vh-300px)]">
       <div className="grid gap-4">
         {requests.map((request) => (
-          <PendingRequestCard key={request.id} request={request} />
+          <PendingRequestCard
+            key={request.id}
+            request={request}
+          />
         ))}
-        {count === 0 && (
+        {!isFetching && count === 0 && (
           <div className="text-center py-12">
             <UserPlus className="h-16 w-16 mx-auto text-muted-foreground mb-4"/>
             <h3 className="text-lg font-semibold mb-2">No pending requests</h3>

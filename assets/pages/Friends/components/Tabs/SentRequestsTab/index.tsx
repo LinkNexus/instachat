@@ -11,7 +11,7 @@ export function SentRequestsTab({requests, count, isFetching}: TabsProps) {
         {requests.map((request: any) => (
           <SentRequestCard key={request.id} request={request} />
         ))}
-        {count === 0 && (
+        {!isFetching && count === 0 && (
           <div className="text-center py-8 sm:py-12 px-4">
             <div
               className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 bg-muted rounded-full flex items-center justify-center">

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\FriendRequest;
 use App\Entity\User;
 use App\Enum\FriendRequestCategory;
+use App\Enum\FriendRequestStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -88,6 +89,33 @@ final class FriendRequestsController extends AbstractController
     {
         return $this->json($this->entityManager->getRepository(FriendRequest::class)
             ->findRequestsCounts($user->getId())
+        );
+    }
+
+    #[Route('/{id}/accept', name: 'accept', methods: ["PUT"])]
+    public function acceptRequest(
+        FriendRequest $friendRequest,
+        #[CurrentUser] User $user
+    ): JsonResponse
+    {
+        if ($user->getId() !== $friendRequest->getTargetUser()?->getId()) {
+            return $this->json([
+                "message" => "You are not authorized to accept this friend request."
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        if ($friendRequest->getStatus() !== FriendRequestStatus::PENDING) {
+            return $this->json([
+                "message" => "This friend request is not pending."
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $friendRequest->setStatus(FriendRequestStatus::ACCEPTED);
+        $this->entityManager->flush();
+
+        return $this->json(
+            $friendRequest,
+            context: ["groups" => ["friend_requests:read"]]
         );
     }
 }

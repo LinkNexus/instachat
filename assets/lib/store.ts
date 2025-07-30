@@ -176,6 +176,19 @@ export const useAppStore = create(
               };
             })
           },
+          moveRequest(requestId: number, category: FriendRequestCategory) {
+            set(state => {
+              const updatedFriendships = {...state.friendships};
+              Object.keys(updatedFriendships).forEach(cat => {
+                updatedFriendships[cat as FriendRequestCategory].requests = updatedFriendships[cat as FriendRequestCategory].requests.filter(r => r.id !== requestId);
+              });
+              const requestToMove = state.friendships[category].requests.find(r => r.id === requestId);
+              if (requestToMove) {
+                updatedFriendships[category].requests.push(requestToMove);
+              }
+              return {friendships: updatedFriendships};
+            });
+          },
           deleteRequest(requestId: number)  {
             set(state => {
               const updatedFriendships = {...state.friendships};
