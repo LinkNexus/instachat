@@ -58,7 +58,7 @@ export function Friends() {
   });
 
   useEffect(() => {
-    if (Object.values(friendships).some(m => !m.count)) {
+    if (Object.values(friendships).every(m => m.count)) {
       fetchRequestsCount();
     }
   }, []);
