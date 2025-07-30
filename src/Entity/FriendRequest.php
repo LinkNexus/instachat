@@ -32,6 +32,7 @@ class FriendRequest
     private ?User $targetUser = null;
 
     #[ORM\Column]
+    #[Groups(["friend_requests:read"])]
     private ?DateTimeImmutable $createdAt;
 
     public function __construct()

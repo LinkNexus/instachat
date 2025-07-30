@@ -42,39 +42,104 @@ class FriendRequestRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * Finds the counts of friend requests for a user.
+     *
+     * @param int $userId The ID of the user.
+     * @return array An associative array with counts of accepted, pending, and sent requests.
+     */
+    public function findRequestsCounts(int $userId): array
+    {
+        return [
+            "accepted" => $this->createQueryBuilder("f")
+                ->select("COUNT(f.id)")
+                ->andWhere("f.status = :status AND (f.requester = :userId OR f.targetUser = :userId)")
+                ->setParameters(new ArrayCollection([
+                    new Parameter('status', FriendRequestStatus::ACCEPTED),
+                    new Parameter('userId', $userId),
+                ]))
+                ->getQuery()
+                ->getSingleScalarResult(),
+            "pending" => $this->createQueryBuilder("f")
+                ->select("COUNT(f.id)")
+                ->andWhere("f.status = :status AND f.targetUser = :userId")
+                ->setParameters(new ArrayCollection([
+                    new Parameter('status', FriendRequestStatus::PENDING),
+                    new Parameter('userId', $userId),
+                ]))
+                ->getQuery()
+                ->getSingleScalarResult(),
+            "sent" => $this->createQueryBuilder("f")
+                ->select("COUNT(f.id)")
+                ->andWhere("f.status = :status AND f.requester = :userId")
+                ->setParameters(new ArrayCollection([
+                    new Parameter('status', FriendRequestStatus::PENDING),
+                    new Parameter('userId', $userId),
+                ]))
+                ->getQuery()
+                ->getSingleScalarResult()
+        ];
+    }
+
     public function findAcceptedRequests(
         $userId,
         int $offset = 0,
         int $limit = 10
     ): array
     {
-        $qb = $this->createQueryBuilder('f');
-        $params = new ArrayCollection([
-            new Parameter('status', FriendRequestStatus::ACCEPTED),
-            new Parameter('userId', $userId),
-        ]);
-
-        $count = $qb
-            ->select('COUNT(f.id)')
-            ->andWhere("f.status = :status AND (f.requester = :userId OR f.targetUser = :userId)")
-            ->setParameters($params)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $results = $qb
+        return $this->createQueryBuilder('f')
             ->select("f")
             ->andWhere("f.status = :status AND (f.requester = :userId OR f.targetUser = :userId)")
-            ->setParameters($params)
+            ->setParameters(new ArrayCollection([
+                new Parameter('status', FriendRequestStatus::ACCEPTED),
+                new Parameter('userId', $userId),
+            ]))
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->orderBy('f.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
+    }
 
-        return [
-            "count" => (int)$count,
-            "results" => $results
-        ];
+    public function findPendingRequests(
+        int $userId,
+        int $offset = 0,
+        int $limit = 10
+    ): array
+    {
+        return $this->createQueryBuilder('f')
+            ->select("f")
+            ->andWhere("f.status = :status AND f.targetUser = :userId")
+            ->setParameters(new ArrayCollection([
+                new Parameter('status', FriendRequestStatus::PENDING),
+                new Parameter('userId', $userId),
+            ]))
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->orderBy('f.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+
+    public function findSentRequests(
+        int $userId,
+        int $offset = 0,
+        int $limit = 10
+    ): array
+    {
+        return $this->createQueryBuilder('f')
+            ->select("f")
+            ->andWhere("f.status = :status AND f.requester = :userId")
+            ->setParameters(new ArrayCollection([
+                new Parameter('status', FriendRequestStatus::PENDING),
+                new Parameter('userId', $userId),
+            ]))
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->orderBy('f.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 
     //    /**

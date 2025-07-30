@@ -1,6 +1,14 @@
 import {env} from "@/lib/env.ts";
 import {apiFetch} from "@/lib/fetch.ts";
-import type {Contacts, Conversation, FriendRequest, FriendRequestCategory, Message, User} from '@/types';
+import type {
+  Contacts,
+  Conversation,
+  FriendRequest,
+  FriendRequestCategory,
+  FriendRequestMap,
+  Message,
+  User
+} from '@/types';
 import {create} from 'zustand';
 import {combine, persist} from 'zustand/middleware';
 
@@ -20,26 +28,21 @@ export const useAppStore = create(
         } as Contacts,
         friendships: {
           "accepted": {
-            count: 0,
+            count: undefined as number | undefined,
             requests: [] as FriendRequest[],
             loaded: false
           },
           "pending": {
-            count: 0,
+            count: undefined as number | undefined,
             requests: [] as FriendRequest[],
             loaded: false
           },
           "sent": {
-            count: 0,
+            count: undefined as number | undefined,
             requests: [] as FriendRequest[],
             loaded: false
           }
-        } satisfies Record<FriendRequestCategory, {
-          count: number,
-          requests: FriendRequest[],
-          loaded: boolean
-        }
-        >,
+        } satisfies Record<FriendRequestCategory, FriendRequestMap>,
       },
       (set, get) => ({
         setUser: (user: User | undefined) => set({user}),
@@ -173,6 +176,29 @@ export const useAppStore = create(
               };
             })
           },
+          deleteRequest(requestId: number)  {
+            set(state => {
+              const updatedFriendships = {...state.friendships};
+              Object.keys(updatedFriendships).forEach(category => {
+                updatedFriendships[category as FriendRequestCategory].requests = updatedFriendships[category as FriendRequestCategory].requests.filter(r => r.id !== requestId);
+              });
+              return {friendships: updatedFriendships};
+            });
+          },
+          setRequestsCount(category: FriendRequestCategory, count: number) {
+            set(state => {
+              const currentCategory = state.friendships[category];
+              return {
+                friendships: {
+                  ...state.friendships,
+                  [category]: {
+                    ...currentCategory,
+                    count: count,
+                  }
+                }
+              };
+            });
+          },
           alterRequestsCount(category: FriendRequestCategory, count: number) {
             set(state => {
               const currentCategory = state.friendships[category];
@@ -181,8 +207,7 @@ export const useAppStore = create(
                   ...state.friendships,
                   [category]: {
                     ...currentCategory,
-                    count: currentCategory.count + count,
-                    loaded: true
+                    count: (currentCategory.count || 0) + count,
                   }
                 }
               };

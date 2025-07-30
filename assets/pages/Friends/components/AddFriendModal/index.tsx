@@ -49,7 +49,7 @@ export function Index({children}: AddFriendModalProps) {
         }
       });
     }
-  }, [searchQuery.trim().toLowerCase(), throttleSearchUsers]);
+  }, [searchQuery.trim().toLowerCase()]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

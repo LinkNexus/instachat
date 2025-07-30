@@ -47,3 +47,9 @@ export interface FriendRequest {
 }
 
 export type FriendRequestCategory = "accepted" | "pending" | "sent";
+
+export interface FriendRequestMap{
+  count?: number,
+  requests: FriendRequest[],
+  loaded: boolean
+}

@@ -26,6 +26,9 @@ export default defineConfig({
     },
     hmr: {
       host: new URL(process.env.VITE_SITE_NAME!).hostname,
+    },
+    watch: {
+      ignored: ["**/node_modules/**", "**/vendor/**", "**/.git/**", "/src/**"]
     }
   },
   resolve: {

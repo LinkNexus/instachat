@@ -7,12 +7,15 @@ use App\Entity\User;
 use App\Enum\FriendRequestCategory;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route("/api/friend-requests", name: "api.friends.", format: "json")]
+#[IsGranted("IS_AUTHENTICATED_FULLY")]
 final class FriendRequestsController extends AbstractController
 {
     public function __construct(
@@ -23,17 +26,22 @@ final class FriendRequestsController extends AbstractController
 
     #[Route('', name: 'list', methods: ["GET"])]
     public function list(
-        #[CurrentUser] User      $user,
+        #[CurrentUser] User                        $user,
         #[MapQueryParameter] FriendRequestCategory $category,
-        #[MapQueryParameter] int $offset = 0
+        #[MapQueryParameter] int                   $offset = 0
     ): Response
     {
         return $this->json(
             match ($category) {
                 FriendRequestCategory::ACCEPTED =>
-                    $this->entityManager->getRepository(FriendRequest::class)
-                        ->findAcceptedRequests($user->getId(), $offset),
-                FriendRequestCategory::PENDING, FriendRequestCategory::SENT => []
+                $this->entityManager->getRepository(FriendRequest::class)
+                    ->findAcceptedRequests($user->getId(), $offset),
+                FriendRequestCategory::PENDING =>
+                $this->entityManager->getRepository(FriendRequest::class)
+                    ->findPendingRequests($user->getId(), $offset),
+                FriendRequestCategory::SENT =>
+                $this->entityManager->getRepository(FriendRequest::class)
+                    ->findSentRequests($user->getId(), $offset),
             },
             context: ["groups" => ["friend_requests:read"]]
         );
@@ -42,7 +50,7 @@ final class FriendRequestsController extends AbstractController
     #[Route('', name: 'create', methods: ["POST"])]
     public function create(
         #[MapQueryParameter] int $targetUserId,
-        #[CurrentUser] User $currentUser
+        #[CurrentUser] User      $currentUser
     ): Response
     {
         $targetUser = $this->entityManager->getRepository(User::class)
@@ -72,6 +80,14 @@ final class FriendRequestsController extends AbstractController
         return $this->json(
             $friendRequest,
             context: ["groups" => ["friend_requests:read"]]
+        );
+    }
+
+    #[Route('/count', name: 'count', methods: ["GET"])]
+    public function getCount(#[CurrentUser] User $user): JsonResponse
+    {
+        return $this->json($this->entityManager->getRepository(FriendRequest::class)
+            ->findRequestsCounts($user->getId())
         );
     }
 }
