@@ -60,9 +60,6 @@ export const useAppStore = create(
           return url;
         },
         getFriendRequestsChannelUrl() {
-          if (window.mercure?.friendRequestsChannel) {
-            return window.mercure.friendRequestsChannel;
-          }
           const url = new URL(env.VITE_SITE_NAME + "/.well-known/mercure");
           url.searchParams.append("topic", `https://example.com/friend-requests/${get().user?.id}`);
           return url;
