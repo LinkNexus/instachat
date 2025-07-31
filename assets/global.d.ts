@@ -6,6 +6,7 @@ declare global {
     csrfToken: string,
     mercure: {
       messagesChannel: string;
+      friendRequestsChannel: string;
     }
   }
 }

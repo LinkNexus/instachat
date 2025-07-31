@@ -118,14 +118,14 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     {
         $countQb = $this->createQueryBuilder('u');
         $count = $countQb->select('COUNT(u.id)')
-            ->where('u.username LIKE :query OR u.name LIKE :query')
+            ->where('ILIKE(u.username, :query) = true OR ILIKE(u.name, :query) = true')
             ->setParameter('query', "%$query%")
             ->getQuery()
             ->getSingleScalarResult();
 
         $qb = $this->createQueryBuilder('u');
         $results = $qb->select('u')
-            ->where('u.username LIKE :query OR u.name LIKE :query')
+            ->where('ILIKE(u.username, :query) = true OR ILIKE(u.name, :query) = true')
             ->setParameter('query', "%$query%")
             ->setFirstResult($offset)
             ->setMaxResults($limit)

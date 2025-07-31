@@ -53,3 +53,8 @@ export interface FriendRequestMap{
   requests: FriendRequest[],
   loaded: boolean
 }
+
+export type FriendRequestEventType = {
+  event: "friend_request.created"| "friend_request.accepted" | "friend_request.rejected";
+  request: FriendRequest;
+}

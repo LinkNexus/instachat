@@ -59,6 +59,14 @@ export const useAppStore = create(
           url.searchParams.append("topic", `https://example.com/messages/${get().user?.id}`);
           return url;
         },
+        getFriendRequestsChannelUrl() {
+          if (window.mercure?.friendRequestsChannel) {
+            return window.mercure.friendRequestsChannel;
+          }
+          const url = new URL(env.VITE_SITE_NAME + "/.well-known/mercure");
+          url.searchParams.append("topic", `https://example.com/friend-requests/${get().user?.id}`);
+          return url;
+        },
         conversationsActions: {
           addContacts(contacts: Contacts) {
             set((state) => {
@@ -189,7 +197,7 @@ export const useAppStore = create(
               return {friendships: updatedFriendships};
             });
           },
-          deleteRequest(requestId: number)  {
+          deleteRequest(requestId: number) {
             set(state => {
               const updatedFriendships = {...state.friendships};
               Object.keys(updatedFriendships).forEach(category => {

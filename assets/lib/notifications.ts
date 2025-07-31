@@ -1,12 +1,12 @@
 export function notify({title, body, events = {}}: {
   title: string;
   body: string;
-  events: {
+  events?: {
     onClick?: (e: Event) => void;
     onClose?: (e: Event) => void;
   }
 }) {
-  let notification: Notification;
+  let notification: Notification | null = null;
 
   if ("Notification" in window) {
     if (Notification.permission === "granted") {

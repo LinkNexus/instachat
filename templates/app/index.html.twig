@@ -9,10 +9,11 @@
             window.mercure = {
                 messagesChannel: "{{ mercure(
                     [
-                        "https://example.com/messages/" ~ app.user.id
+                        "https://example.com/messages/" ~ app.user.id,
+                        "https://example.com/friend-requests/" ~ app.user.id,
                     ],
                     {
-                        subscribe: "https://example.com/messages/" ~ app.user.id
+                        subscribe: "https://example.com/messages/" ~ app.user.id,
                     }
                 )|escape('js') }}"
             }

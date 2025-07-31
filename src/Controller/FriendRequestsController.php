@@ -5,9 +5,12 @@ namespace App\Controller;
 use App\Entity\FriendRequest;
 use App\Entity\User;
 use App\Enum\FriendRequestCategory;
+use App\Enum\FriendRequestEventType;
 use App\Enum\FriendRequestStatus;
+use App\Event\FriendRequestEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
@@ -20,7 +23,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class FriendRequestsController extends AbstractController
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager
+        private readonly EntityManagerInterface   $entityManager,
+        private readonly EventDispatcherInterface $dispatcher
     )
     {
     }
@@ -78,6 +82,13 @@ final class FriendRequestsController extends AbstractController
 
         $this->entityManager->flush();
 
+        $this->dispatcher->dispatch(
+            new FriendRequestEvent(
+                $friendRequest,
+                FriendRequestEventType::CREATED
+            )
+        );
+
         return $this->json(
             $friendRequest,
             context: ["groups" => ["friend_requests:read"]]
@@ -94,7 +105,7 @@ final class FriendRequestsController extends AbstractController
 
     #[Route('/{id}/accept', name: 'accept', methods: ["PUT"])]
     public function acceptRequest(
-        FriendRequest $friendRequest,
+        FriendRequest       $friendRequest,
         #[CurrentUser] User $user
     ): JsonResponse
     {
